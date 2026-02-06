@@ -1,4 +1,4 @@
-package com.rodrigogalvao.transactionservice;
+package com.rodrigogalvao.transaction.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

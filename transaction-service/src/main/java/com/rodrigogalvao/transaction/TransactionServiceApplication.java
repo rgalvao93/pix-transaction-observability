@@ -1,4 +1,4 @@
-package com.rodrigogalvao.transactionservice;
+package com.rodrigogalvao.transaction;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
