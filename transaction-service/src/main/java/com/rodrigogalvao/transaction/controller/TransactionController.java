@@ -1,27 +1,25 @@
 package com.rodrigogalvao.transaction.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.rodrigogalvao.transaction.model.TransactionRequest;
+import com.rodrigogalvao.transaction.model.TransactionResponse;
+import com.rodrigogalvao.transaction.model.TransactionStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import static net.logstash.logback.argument.StructuredArguments.kv;
 
 @RestController
 @RequestMapping("/transactions")
 public class TransactionController {
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(TransactionController.class);
-
     @PostMapping
-    public ResponseEntity<String> createTransaction(
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+    public ResponseEntity<TransactionResponse> createTransaction(
+            @RequestBody TransactionRequest request) {
 
-        logger.info("Transaction request received",
-                kv("requestId", requestId));
+        TransactionResponse response = new TransactionResponse(
+                request.getTransactionId(),
+                TransactionStatus.PROCESSED.name(),
+                null
+        );
 
-        return ResponseEntity.ok("Transaction received");
+        return ResponseEntity.ok(response);
     }
 }
