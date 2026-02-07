@@ -2,7 +2,6 @@ package com.rodrigogalvao.transaction.controller;
 
 import com.rodrigogalvao.transaction.dto.TransactionRequest;
 import com.rodrigogalvao.transaction.dto.TransactionResponse;
-import com.rodrigogalvao.transaction.model.TransactionStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
