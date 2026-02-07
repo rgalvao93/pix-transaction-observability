@@ -1,6 +1,7 @@
 com/rodrigogalvao/transaction/dto/TransactionRequest.class
 com/rodrigogalvao/transaction/model/TransactionStatus.class
 com/rodrigogalvao/transaction/dto/TransactionResponse.class
+com/rodrigogalvao/transaction/service/TransactionService.class
 com/rodrigogalvao/transaction/TransactionServiceApplication.class
 com/rodrigogalvao/transaction/model/TransactionRequest.class
 com/rodrigogalvao/transaction/model/TransactionResponse.class

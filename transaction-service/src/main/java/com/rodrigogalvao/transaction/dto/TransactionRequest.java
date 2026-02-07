@@ -1,19 +1,27 @@
 package com.rodrigogalvao.transaction.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 import java.math.BigDecimal;
-import java.time.Instant;
 
 public class TransactionRequest {
 
+    @NotBlank(message = "transactionId is required")
     private String transactionId;
-    private String payer;
-    private String receiver;
+
+    @NotBlank(message = "type is required")
+    private String type; // CASH_IN | CASH_OUT
+
+    @NotNull(message = "amount is required")
+    @Positive(message = "amount must be greater than zero")
     private BigDecimal amount;
-    private Instant timestamp;
 
-    public TransactionRequest() {
-    }
+    @NotBlank(message = "accountId is required")
+    private String accountId;
 
+    // getters e setters
     public String getTransactionId() {
         return transactionId;
     }
@@ -22,20 +30,12 @@ public class TransactionRequest {
         this.transactionId = transactionId;
     }
 
-    public String getPayer() {
-        return payer;
+    public String getType() {
+        return type;
     }
 
-    public void setPayer(String payer) {
-        this.payer = payer;
-    }
-
-    public String getReceiver() {
-        return receiver;
-    }
-
-    public void setReceiver(String receiver) {
-        this.receiver = receiver;
+    public void setType(String type) {
+        this.type = type;
     }
 
     public BigDecimal getAmount() {
@@ -46,11 +46,11 @@ public class TransactionRequest {
         this.amount = amount;
     }
 
-    public Instant getTimestamp() {
-        return timestamp;
+    public String getAccountId() {
+        return accountId;
     }
 
-    public void setTimestamp(Instant timestamp) {
-        this.timestamp = timestamp;
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
     }
 }
