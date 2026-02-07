@@ -1,7 +1,7 @@
 package com.rodrigogalvao.transaction.controller;
 
-import com.rodrigogalvao.transaction.model.TransactionRequest;
-import com.rodrigogalvao.transaction.model.TransactionResponse;
+import com.rodrigogalvao.transaction.dto.TransactionRequest;
+import com.rodrigogalvao.transaction.dto.TransactionResponse;
 import com.rodrigogalvao.transaction.model.TransactionStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +16,7 @@ public class TransactionController {
 
         TransactionResponse response = new TransactionResponse(
                 request.getTransactionId(),
-                TransactionStatus.PROCESSED.name(),
+                "PROCESSED",
                 null
         );
 
