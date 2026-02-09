@@ -1,34 +1,51 @@
 # Pix Transaction Observability
 
-This repository presents an MVP design focused on observability and operational reliability
-for a Pix transactional service.
+Este repositório implementa um MVP projetado com **princípios de observabilidade em primeiro lugar** para um serviço transacional Pix. Ele simula operações financeiras de alta confiabilidade, incluindo integração com parceiros externos e tratamento de casos de borda.
 
-## Context
-A Pix transactional service responsible for cash-in and cash-out operations,
-integrated with an external partner and operating in a regulated environment.
+## 🏗 Contexto
+O componente principal é um serviço transacional Pix que lida com operações de **cash-in** e **cash-out**. Ele opera em um ambiente regulamentado onde a confiabilidade e a rápida resolução de incidentes são fundamentais.
 
-## Goal
-Design a minimal but realistic architecture that is observable from day one,
-allowing early detection of issues and efficient incident response.
-The MVP consists of a single transactional microservice, an external partner mock,
-and a basic observability stack to simulate real production scenarios.
+## 🎯 Objetivos
+- **Observabilidade desde o Dia Um**: Logs, métricas e traces são nativos, não uma reflexão tardia.
+- **Resiliência**: Tratamento de latência e erros provenientes de parceiros externos.
+- **Simulação Realista**: Um ambiente autônomo para testar respostas operacionais.
 
-## Scope
-- Cash-in and cash-out flows
-- External partner integration (mock)
-- Transaction state management
-- Observability-first approach
+## 🚀 Tecnologias
+- **Java 21**
+- **Spring Boot 3+**
+- **Spring Boot Actuator**
+- **Logstash Logback Encoder**
+- **Maven** (Wrapper incluído)
 
-## High-Level Architecture
+## 📂 Estrutura do Projeto
+| Diretório | Descrição |
+|-----------|-----------|
+| `transaction-service` | Microsserviço principal lidando com a lógica de transação Pix. |
+| `external-partner-mock` | Simula o parceiro externo (ex: Banco Central ou PSP) com latência/erros configuráveis. |
+| `observability` | Configuração para a stack de observabilidade (Prometheus, Grafana, OpenTelemetry). |
+| `docs` | Documentação e diagramas de arquitetura. |
 
-- Transaction Service  
-  Responsible for handling Pix cash-in and cash-out transactions.
-  Exposes REST APIs and manages transaction state.
+## ⚡ Começando
 
-- External Partner (Mock)  
-  Simulates a regulated external partner for transaction processing,
-  including latency and error scenarios.
+### Pré-requisitos
+- Java 21+
 
-- Observability Layer  
-  Provides logs, metrics and traces for all transactional flows,
-  enabling incident detection and root cause analysis.
+### Executando o Serviço de Transação
+O projeto usa o Maven Wrapper, então você não precisa instalar o Maven manualmente.
+
+1. Navegue até o diretório do serviço:
+   ```bash
+   cd transaction-service
+   ```
+
+2. Execute a aplicação:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+
+A aplicação iniciará na porta `8080` (padrão).
+
+## 🔭 Funcionalidades de Observabilidade
+- **Logs Estruturados**: Logs em JSON prontos para ingestão (via `logstash-logback-encoder`).
+- **Métricas**: Expostas via Spring Boot Actuator (ex: `/actuator/prometheus`).
+- **Verificações de Saúde**: Probes de Readiness e Liveness configurados.
