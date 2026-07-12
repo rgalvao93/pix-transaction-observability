@@ -28,7 +28,7 @@ Authorization: Bearer <jwt>   # a partir da Fase 2
 | Campo | Tipo | Obrigatório | Regra |
 |-------|------|--------------|-------|
 | `transactionId` | string | Sim | Não vazio |
-| `type` | string | Sim | `CASH_IN` ou `CASH_OUT` |
+| `type` | string | Sim | Não vazio. *Restrição a `CASH_IN`/`CASH_OUT` ainda não é validada — hoje `dto.TransactionRequest` só exige `@NotBlank`, e `TransactionController` retorna `PROCESSED` para qualquer valor. Validação de enum será adicionada na Fase 2.* |
 | `amount` | decimal | Sim | Maior que zero |
 | `accountId` | string | Sim | Não vazio |
 
@@ -74,7 +74,7 @@ Retornado quando a validação do payload falha (campo ausente, `amount` <= 0, e
 | Endpoint | Descrição |
 |----------|-----------|
 | `GET /actuator/health` | Status geral da aplicação (liveness/readiness) |
-| `GET /actuator/prometheus` | Métricas no formato Prometheus |
+| `GET /actuator/prometheus` | *Planejado, Fase 4.* Métricas no formato Prometheus — hoje o `pom.xml` não inclui `micrometer-registry-prometheus` e o endpoint não está exposto em `application.properties`. |
 
 Ver detalhes em [`OBSERVABILITY.md`](./OBSERVABILITY.md).
 
