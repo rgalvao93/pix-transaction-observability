@@ -5,16 +5,10 @@ O projeto adota observabilidade como requisito de primeira classe: logs, métric
 ## Logs Estruturados
 
 - Biblioteca: `logstash-logback-encoder` (já presente no `pom.xml`).
-- Formato: JSON, pronto para ingestão por ferramentas como Loki, ELK ou similares.
-- Configuração: `src/main/resources/logback-spring.xml` *(a criar na Fase 4)*.
-- Cada etapa crítica do fluxo de transação deve logar, no mínimo:
-  - `transactionId`
-  - `type` (CASH_IN/CASH_OUT)
-  - `status` resultante
-  - Latência da chamada ao parceiro externo
-  - Erros/exceções com stack trace resumido
+- `TransactionService` já loga (via SLF4J) `transactionId`, o status resultante, o motivo de falha e o tempo total de processamento em cada transação; `HttpExternalPartnerClient` loga cada tentativa de chamada ao parceiro que falhar.
+- **Pendente (Fase 4)**: configurar `src/main/resources/logback-spring.xml` para emitir esses logs em **JSON** (hoje saem no formato texto padrão do Spring Boot no console), pronto para ingestão por ferramentas como Loki, ELK ou similares.
 
-Exemplo de linha de log (formato alvo):
+Exemplo de linha de log (formato alvo após a Fase 4):
 ```json
 {
   "timestamp": "2026-07-11T10:00:00.123Z",

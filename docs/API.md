@@ -4,7 +4,25 @@
 
 ## Autenticação
 
-*Planejado para a Fase 2.* Todos os endpoints sob `/transactions/**` exigirão um header `Authorization: Bearer <jwt>`. Endpoints de infraestrutura (`/actuator/**`) permanecem públicos.
+Todos os endpoints sob `/transactions/**` exigem um header `Authorization: Bearer <jwt>`. Endpoints de infraestrutura (`/actuator/**`) e `/auth/**` são públicos.
+
+### POST /auth/token
+
+Endpoint de **desenvolvimento/teste** que emite um JWT para o `clientId` informado, sem validar credenciais. Não é autenticação real — serve apenas para obter um token e testar os endpoints protegidos localmente, até que um provedor de identidade seja integrado.
+
+```http
+POST /auth/token
+Content-Type: application/json
+
+{ "clientId": "test-client" }
+```
+
+```json
+// Response — 200 OK
+{ "token": "eyJhbGciOiJIUzI1NiJ9..." }
+```
+
+O segredo usado para assinar o token é configurado via `security.jwt.secret` (env var `SECURITY_JWT_SECRET`); o valor padrão em `application.properties` é apenas para demonstração.
 
 ## POST /transactions
 
@@ -15,7 +33,7 @@ Cria e processa uma transação Pix (cash-in ou cash-out).
 ```http
 POST /transactions
 Content-Type: application/json
-Authorization: Bearer <jwt>   # a partir da Fase 2
+Authorization: Bearer <jwt>
 
 {
   "transactionId": "txn-123456",
@@ -27,8 +45,8 @@ Authorization: Bearer <jwt>   # a partir da Fase 2
 
 | Campo | Tipo | Obrigatório | Regra |
 |-------|------|--------------|-------|
-| `transactionId` | string | Sim | Não vazio |
-| `type` | string | Sim | Não vazio. *Restrição a `CASH_IN`/`CASH_OUT` ainda não é validada — hoje `dto.TransactionRequest` só exige `@NotBlank`, e `TransactionController` retorna `PROCESSED` para qualquer valor. Validação de enum será adicionada na Fase 2.* |
+| `transactionId` | string | Sim | Não vazio. Reenviar o mesmo `transactionId` retorna a resposta já processada (idempotência), sem chamar o parceiro externo novamente. |
+| `type` | string | Sim | `CASH_IN` ou `CASH_OUT` (enum `TransactionType`); qualquer outro valor é rejeitado com 400 |
 | `amount` | decimal | Sim | Maior que zero |
 | `accountId` | string | Sim | Não vazio |
 
@@ -45,7 +63,9 @@ Authorization: Bearer <jwt>   # a partir da Fase 2
 | Campo | Descrição |
 |-------|-----------|
 | `status` | `PROCESSED`, `FAILED` (falha de negócio) ou `ERROR` (falha técnica) |
-| `reason` | Motivo da falha, quando aplicável (ex: `"saldo insuficiente"`) |
+| `reason` | Motivo da falha, quando aplicável |
+
+Motivos de `FAILED` conhecidos: `"conta não disponível"` (cash-in), `"saldo insuficiente"` (cash-out), `"limite diário excedido"` (cash-out), `"falha na transferência"` (parceiro recusou). Motivo de `ERROR`: `"falha de comunicação com o parceiro externo"`.
 
 ### Response — 400 Bad Request
 
@@ -63,11 +83,11 @@ Retornado quando a validação do payload falha (campo ausente, `amount` <= 0, e
 
 ### Response — 401 Unauthorized
 
-*A partir da Fase 2.* Retornado quando o token JWT está ausente ou é inválido.
+Retornado quando o header `Authorization` está ausente ou o token JWT é inválido/expirado.
 
-### Response — 504 / erro tratado
+### Falha de comunicação com o parceiro externo
 
-*A partir da Fase 2.* Retornado (ou convertido em `status: ERROR` no corpo) quando o `external-partner-mock` não responde dentro do timeout configurado, mesmo após as tentativas de retry.
+Quando o `external-partner-mock` não responde dentro do timeout configurado (mesmo após as tentativas de retry — ver `partner.retry.*` em [`architecture.md`](./architecture.md)), a resposta continua **200 OK**, mas com `status: "ERROR"` no corpo — não há um código HTTP de erro dedicado para esse caso.
 
 ## Endpoints de Infraestrutura (Spring Boot Actuator)
 

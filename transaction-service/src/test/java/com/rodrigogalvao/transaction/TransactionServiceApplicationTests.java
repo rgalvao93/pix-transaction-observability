@@ -1,4 +1,4 @@
-package com.rodrigogalvao.transaction_service;
+package com.rodrigogalvao.transaction;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

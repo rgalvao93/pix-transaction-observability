@@ -21,10 +21,14 @@ pix-transaction-observability/
 │   └── src/
 │       ├── main/java/com/rodrigogalvao/transaction/
 │       │   ├── TransactionServiceApplication.java
-│       │   ├── controller/        # Endpoints REST
+│       │   ├── controller/        # Endpoints REST (TransactionController, AuthController)
 │       │   ├── service/           # Lógica de negócio
-│       │   ├── dto/               # Objetos de transporte HTTP (request/response)
-│       │   └── model/             # Domínio (status, entidades internas)
+│       │   ├── dto/               # Objetos de transporte HTTP (request/response/erro)
+│       │   ├── model/             # Domínio (TransactionType, TransactionStatus)
+│       │   ├── partner/           # Cliente HTTP do parceiro externo (retry/timeout)
+│       │   ├── repository/        # Repositórios em memória (idempotência, limite diário)
+│       │   ├── security/          # JWT (provider, filtro, configuração)
+│       │   └── exception/         # Tratamento global de erros (400/401)
 │       └── test/                  # Testes unitários e de integração
 ├── external-partner-mock/         # Mock do parceiro externo (Fase 3)
 └── observability/                 # Stack Prometheus/Grafana (Fase 4)
@@ -41,9 +45,16 @@ A aplicação sobe em `http://localhost:8080`.
 
 ### Testando manualmente
 
+Endpoints sob `/transactions` exigem um JWT. Obtenha um token de teste em `/auth/token` (ver [`API.md`](./API.md) — não é autenticação real, apenas conveniência de desenvolvimento):
+
 ```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"clientId": "dev"}' | jq -r .token)
+
 curl -X POST http://localhost:8080/transactions \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "transactionId": "txn-001",
     "type": "CASH_IN",
@@ -51,6 +62,8 @@ curl -X POST http://localhost:8080/transactions \
     "accountId": "acc-123"
   }'
 ```
+
+Sem o `external-partner-mock` rodando (Fase 3), a chamada acima retorna `status: "ERROR"` — o `transaction-service` tenta se comunicar com `http://localhost:8081` e falha após as tentativas de retry.
 
 ## Rodando os testes
 
