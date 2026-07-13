@@ -30,18 +30,30 @@ pix-transaction-observability/
 │       │   ├── security/          # JWT (provider, filtro, configuração)
 │       │   └── exception/         # Tratamento global de erros (400/401)
 │       └── test/                  # Testes unitários e de integração
-├── external-partner-mock/         # Mock do parceiro externo (Fase 3)
+├── external-partner-mock/         # Mock do parceiro externo
+│   ├── pom.xml
+│   └── src/main/java/com/rodrigogalvao/partnermock/
+│       ├── PartnerMockApplication.java
+│       ├── controller/             # PartnerController (verify-balance, transfer)
+│       ├── service/                # PartnerService (contas em memória, latência/falha)
+│       ├── dto/, model/, security/, exception/  # mesmos papéis do transaction-service
 └── observability/                 # Stack Prometheus/Grafana (Fase 4)
 ```
 
-## Rodando o transaction-service localmente
+## Rodando os dois serviços localmente
+
+Suba primeiro o `external-partner-mock` (porta 8081), depois o `transaction-service` (porta 8080) — ambos precisam do **mesmo** `SECURITY_JWT_SECRET` para que os tokens emitidos por um sejam aceitos pelo outro (por padrão os dois usam o mesmo valor de demonstração em `application.properties`, então basta rodar sem sobrescrever nada):
 
 ```bash
-cd transaction-service
+cd external-partner-mock
 ./mvnw spring-boot:run
 ```
 
-A aplicação sobe em `http://localhost:8080`.
+```bash
+# em outro terminal
+cd transaction-service
+./mvnw spring-boot:run
+```
 
 ### Testando manualmente
 
@@ -63,23 +75,14 @@ curl -X POST http://localhost:8080/transactions \
   }'
 ```
 
-Sem o `external-partner-mock` rodando (Fase 3), a chamada acima retorna `status: "ERROR"` — o `transaction-service` tenta se comunicar com `http://localhost:8081` e falha após as tentativas de retry.
+Com o `external-partner-mock` rodando, a resposta deve ser `{"status":"PROCESSED",...}` (`acc-123` já vem pré-carregada com saldo 1000.00). Sem o mock rodando, a mesma chamada retorna `status: "ERROR"` — o `transaction-service` tenta se comunicar com `http://localhost:8081`, falha após as tentativas de retry, e reporta o erro no corpo da resposta.
 
 ## Rodando os testes
 
 ```bash
-cd transaction-service
-./mvnw test
+cd transaction-service && ./mvnw test
+cd external-partner-mock && ./mvnw test
 ```
-
-## Rodando o external-partner-mock (a partir da Fase 3)
-
-```bash
-cd external-partner-mock
-./mvnw spring-boot:run
-```
-
-Sobe em `http://localhost:8081`. O `transaction-service` deve ser configurado (via `application.properties`) para apontar para essa URL.
 
 ## Rodando a stack de observabilidade (a partir da Fase 4)
 

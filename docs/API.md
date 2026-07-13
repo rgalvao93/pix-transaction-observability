@@ -98,9 +98,13 @@ Quando o `external-partner-mock` não responde dentro do timeout configurado (me
 
 Ver detalhes em [`OBSERVABILITY.md`](./OBSERVABILITY.md).
 
-## API — external-partner-mock (planejado, Fase 3)
+## API — external-partner-mock
 
 > Base URL: `http://localhost:8081`
+
+Assim como o `transaction-service`, todos os endpoints sob `/partner/**` exigem `Authorization: Bearer <jwt>`. O token é validado com o **mesmo segredo** (`security.jwt.secret` / env var `SECURITY_JWT_SECRET`) usado pelo `transaction-service` para assiná-lo — o `HttpExternalPartnerClient` gera um token novo a cada chamada.
+
+Duas contas de demonstração já vêm pré-carregadas em memória: `acc-123` (saldo 1000.00) e `acc-789` (saldo 500.00). Qualquer outra `accountId` é tratada como desconhecida (`available: false`).
 
 ### POST /partner/verify-balance
 
@@ -122,4 +126,4 @@ Ver detalhes em [`OBSERVABILITY.md`](./OBSERVABILITY.md).
 { "success": true, "partnerReference": "psp-ref-987" }
 ```
 
-Ambos os endpoints podem responder com latência artificial ou erro simulado, conforme configuração descrita em [`architecture.md`](./architecture.md).
+`transfer` aplica o delta (`CASH_IN` soma, `CASH_OUT` subtrai) ao saldo em memória quando `success: true`. Ambos os endpoints simulam latência artificial e uma taxa de falha configuráveis (`partner.mock.latency.min-ms`/`max-ms`, `partner.mock.failure-rate` — ver [`architecture.md`](./architecture.md)); uma falha simulada retorna `success: false` com HTTP 200, não um erro HTTP.

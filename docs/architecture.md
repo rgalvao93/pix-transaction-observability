@@ -44,7 +44,11 @@ Microsserviço principal (Spring Boot 4 / Java 21). Recebe requisições de tran
 - Logs estruturados via SLF4J em cada etapa crítica
 
 ### external-partner-mock
-Serviço separado (Spring Boot) que simula o comportamento de um parceiro externo (PSP ou Banco Central). Permite configurar latência e taxa de falha para testar resiliência do `transaction-service`. *Ainda não implementado — Fase 3.*
+Serviço separado (Spring Boot 4 / Java 21, porta 8081) que simula o comportamento de um parceiro externo (PSP ou Banco Central). Responsável por:
+- Contas em memória pré-carregadas (`acc-123`, `acc-789`) com saldo — fonte de verdade do saldo "bancário", já que o `transaction-service` não persiste saldos
+- `POST /partner/verify-balance` e `POST /partner/transfer` (ver [`API.md`](./API.md))
+- Latência artificial (`partner.mock.latency.min-ms`/`max-ms`) e taxa de falha simulada (`partner.mock.failure-rate`) configuráveis, para exercitar o retry do `transaction-service`
+- Mesma autenticação JWT do `transaction-service`, validando tokens assinados com o segredo compartilhado (`security.jwt.secret`)
 
 ### observability
 Configuração Docker Compose com Prometheus (scrape de métricas), Grafana (dashboards) e AlertManager (alertas). *Ainda não implementado — Fase 4.*
@@ -82,7 +86,7 @@ Mesmo fluxo do cash-in, com verificações adicionais entre os passos 4 e 6:
 | Diretório | Descrição | Status |
 |-----------|-----------|--------|
 | `transaction-service/` | Microsserviço principal | Lógica de negócio, segurança JWT e testes implementados (Fase 2) |
-| `external-partner-mock/` | Mock do parceiro externo | Não implementado — Fase 3 |
+| `external-partner-mock/` | Mock do parceiro externo | Implementado (Fase 3) |
 | `observability/` | Stack Prometheus/Grafana | Não implementado — Fase 4 |
 | `docs/` | Documentação e diagramas | Em construção |
 
