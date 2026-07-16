@@ -1,5 +1,6 @@
 package com.rodrigogalvao.transaction.dto;
 
+import com.rodrigogalvao.transaction.model.TransactionType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -11,8 +12,8 @@ public class TransactionRequest {
     @NotBlank(message = "transactionId is required")
     private String transactionId;
 
-    @NotBlank(message = "type is required")
-    private String type; // CASH_IN | CASH_OUT
+    @NotNull(message = "type is required and must be CASH_IN or CASH_OUT")
+    private TransactionType type;
 
     @NotNull(message = "amount is required")
     @Positive(message = "amount must be greater than zero")
@@ -30,11 +31,11 @@ public class TransactionRequest {
         this.transactionId = transactionId;
     }
 
-    public String getType() {
+    public TransactionType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(TransactionType type) {
         this.type = type;
     }
 

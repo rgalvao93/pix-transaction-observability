@@ -49,3 +49,10 @@ A aplicação iniciará na porta `8080` (padrão).
 - **Logs Estruturados**: Logs em JSON prontos para ingestão (via `logstash-logback-encoder`).
 - **Métricas**: Expostas via Spring Boot Actuator (ex: `/actuator/prometheus`).
 - **Verificações de Saúde**: Probes de Readiness e Liveness configurados.
+
+## 📖 Documentação
+
+- [Arquitetura](docs/architecture.md) — Componentes, fluxos de cash-in/cash-out e known issues
+- [API](docs/API.md) — Endpoints, schemas e exemplos de requisição/resposta
+- [Observabilidade](docs/OBSERVABILITY.md) — Logs, métricas, health checks e stack Prometheus/Grafana
+- [Guia de Desenvolvimento](docs/DEVELOPMENT.md) — Setup local, estrutura de pastas e convenções
