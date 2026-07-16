@@ -1,0 +1,41 @@
+groups:
+  - name: pix-transaction-observability
+    rules:
+      - alert: HighTransactionErrorRate
+        expr: |
+          sum(rate(transaction_total{status="ERROR"}[5m]))
+          /
+          sum(rate(transaction_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Taxa de erro de transações acima de 5%"
+          description: "Mais de 5% das transações Pix terminaram em ERROR nos últimos 5 minutos."
+
+      - alert: PartnerCallFailuresHigh
+        expr: increase(external_partner_calls_failed_total[10m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Falhas de comunicação com o parceiro externo"
+          description: "Mais de 5 chamadas ao external-partner-mock falharam (após esgotar os retries) nos últimos 10 minutos."
+
+      - alert: TransactionServiceDown
+        expr: up{job="transaction-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "transaction-service indisponível"
+          description: "O Prometheus não conseguiu coletar métricas do transaction-service no último minuto."
+
+      - alert: ExternalPartnerMockDown
+        expr: up{job="external-partner-mock"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "external-partner-mock indisponível"
+          description: "O Prometheus não conseguiu coletar métricas do external-partner-mock no último minuto."
