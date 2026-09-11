@@ -4,7 +4,7 @@
 
 - Java 21+
 - Maven Wrapper incluído (não precisa instalar Maven manualmente)
-- Docker + Docker Compose *(necessário a partir da Fase 4, para subir a stack de observabilidade)*
+- Docker + Docker Compose *(necessário apenas para subir a stack de observabilidade — Prometheus/Grafana/AlertManager)*
 
 ## Estrutura de Pastas
 
@@ -37,7 +37,11 @@ pix-transaction-observability/
 │       ├── controller/             # PartnerController (verify-balance, transfer)
 │       ├── service/                # PartnerService (contas em memória, latência/falha)
 │       ├── dto/, model/, security/, exception/  # mesmos papéis do transaction-service
-└── observability/                 # Stack Prometheus/Grafana (Fase 4)
+└── observability/                 # Stack Prometheus + Grafana + AlertManager (Docker Compose)
+    ├── docker-compose.yml
+    ├── prometheus/                 # prometheus.yml (scrape config) + rules.yml (alertas)
+    ├── grafana/                    # provisioning (datasource/dashboard) + dashboards/*.json
+    └── alertmanager/                # alertmanager.yml
 ```
 
 ## Rodando os dois serviços localmente
@@ -84,15 +88,22 @@ cd transaction-service && ./mvnw test
 cd external-partner-mock && ./mvnw test
 ```
 
-## Rodando a stack de observabilidade (a partir da Fase 4)
+## Rodando a stack de observabilidade
+
+Com `transaction-service` e `external-partner-mock` já rodando localmente (ver acima), suba a stack:
 
 ```bash
 cd observability
 docker compose up -d
 ```
 
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3000`
+- **Prometheus**: `http://localhost:9090` — em Status → Targets, confira que `transaction-service` e `external-partner-mock` aparecem `UP`
+- **Grafana**: `http://localhost:3000` (login `admin`/`admin`) — dashboard "Pix Transaction Observability" já provisionado, com painéis de taxa de erro, latência p95 e falhas de comunicação com o parceiro
+- **AlertManager**: `http://localhost:9093`
+
+Gere tráfego de teste (sucesso, saldo insuficiente, falha simulada) para ver os painéis reagirem — ver exemplos de `curl` em [Testando manualmente](#testando-manualmente) acima. Para forçar falhas simuladas do parceiro, suba o `external-partner-mock` com `partner.mock.failure-rate` mais alto, ex: `PARTNER_MOCK_FAILURE_RATE=0.5 ./mvnw spring-boot:run` (ou ajuste a propriedade diretamente).
+
+> A sintaxe do `docker-compose.yml` foi validada com `docker compose config`; o `docker compose up` completo (baixar as imagens e subir os três containers) não foi executado no ambiente de desenvolvimento original, que não tinha o daemon Docker disponível. Ver detalhes em [`OBSERVABILITY.md`](./OBSERVABILITY.md).
 
 ## Convenções de Código
 

@@ -1,6 +1,7 @@
 package com.rodrigogalvao.transaction.partner;
 
 import com.rodrigogalvao.transaction.security.JwtTokenProvider;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -19,7 +20,8 @@ class HttpExternalPartnerClientTest {
             new JwtTokenProvider("test-only-secret-at-least-32-bytes-long-1234567890", 60_000);
 
     private HttpExternalPartnerClient buildClient(RestClient.Builder builder, int maxAttempts) {
-        return new HttpExternalPartnerClient(builder, JWT_TOKEN_PROVIDER, BASE_URL, maxAttempts, 10);
+        return new HttpExternalPartnerClient(builder, JWT_TOKEN_PROVIDER, new SimpleMeterRegistry(), BASE_URL,
+                maxAttempts, 10);
     }
 
     @Test

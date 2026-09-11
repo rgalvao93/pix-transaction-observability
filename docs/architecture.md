@@ -51,7 +51,7 @@ Serviço separado (Spring Boot 4 / Java 21, porta 8081) que simula o comportamen
 - Mesma autenticação JWT do `transaction-service`, validando tokens assinados com o segredo compartilhado (`security.jwt.secret`)
 
 ### observability
-Configuração Docker Compose com Prometheus (scrape de métricas), Grafana (dashboards) e AlertManager (alertas). *Ainda não implementado — Fase 4.*
+Configuração Docker Compose com Prometheus (scrape de `/actuator/prometheus` dos dois serviços + regras de alerta), Grafana (dashboard provisionado automaticamente) e AlertManager (roteamento de alertas, sem canal de notificação real). Ver [`OBSERVABILITY.md`](./OBSERVABILITY.md).
 
 ## Fluxo — Cash-In
 
@@ -87,7 +87,7 @@ Mesmo fluxo do cash-in, com verificações adicionais entre os passos 4 e 6:
 |-----------|-----------|--------|
 | `transaction-service/` | Microsserviço principal | Lógica de negócio, segurança JWT e testes implementados (Fase 2) |
 | `external-partner-mock/` | Mock do parceiro externo | Implementado (Fase 3) |
-| `observability/` | Stack Prometheus/Grafana | Não implementado — Fase 4 |
+| `observability/` | Stack Prometheus/Grafana/AlertManager | Implementado (Fase 4) |
 | `docs/` | Documentação e diagramas | Em construção |
 
 ## Notas de Compatibilidade (Spring Boot 4)

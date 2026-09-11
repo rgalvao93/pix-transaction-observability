@@ -8,6 +8,7 @@ import com.rodrigogalvao.transaction.partner.ExternalPartnerClient;
 import com.rodrigogalvao.transaction.partner.ExternalPartnerException;
 import com.rodrigogalvao.transaction.repository.DailyLimitTracker;
 import com.rodrigogalvao.transaction.repository.TransactionRepository;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +40,8 @@ class TransactionServiceTest {
 
     @BeforeEach
     void setUp() {
-        transactionService = new TransactionService(partnerClient, transactionRepository, dailyLimitTracker);
+        transactionService = new TransactionService(partnerClient, transactionRepository, dailyLimitTracker,
+                new SimpleMeterRegistry());
     }
 
     private TransactionRequest request(TransactionType type, BigDecimal amount) {

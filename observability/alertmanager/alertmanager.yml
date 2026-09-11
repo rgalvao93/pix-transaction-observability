@@ -1,0 +1,11 @@
+route:
+  receiver: default
+  group_by: ["alertname"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  # DEMO: no real notification channel configured. To wire up real alerting,
+  # add e.g. slack_configs / email_configs / webhook_configs here.
+  - name: default
