@@ -52,6 +52,7 @@ A aplicação iniciará na porta `8080` (padrão).
 
 ## 📖 Documentação
 
+- [System Design](docs/system-design.md) — Levantamento de requisitos funcionais e não-funcionais, regras de negócio, casos de uso, decisões de arquitetura e gaps
 - [Arquitetura](docs/architecture.md) — Componentes, fluxos de cash-in/cash-out e known issues
 - [API](docs/API.md) — Endpoints, schemas e exemplos de requisição/resposta
 - [Observabilidade](docs/OBSERVABILITY.md) — Logs, métricas, health checks e stack Prometheus/Grafana
