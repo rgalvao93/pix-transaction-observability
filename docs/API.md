@@ -2,6 +2,19 @@
 
 > Base URL: `http://localhost:8080`
 
+## Contrato OpenAPI
+
+Cada serviço expõe **Swagger UI** e um **contrato OpenAPI 3.1** gerado pelo `springdoc-openapi`:
+
+| Serviço | Swagger UI | Contrato (JSON) |
+|---------|------------|-----------------|
+| transaction-service | <http://localhost:8080/swagger-ui.html> | <http://localhost:8080/v3/api-docs> |
+| external-partner-mock | <http://localhost:8081/swagger-ui.html> | <http://localhost:8081/v3/api-docs> |
+
+O contrato também é **versionado no repositório** em [`api-spec/`](../api-spec/): `transaction-service.openapi.yaml` e `external-partner-mock.openapi.yaml`. O CI regera o contrato a partir dos serviços rodando e falha se houver **drift** (contrato versionado divergente da API implementada). Para atualizar os arquivos versionados localmente, rode `scripts/export-openapi.sh` com os dois serviços no ar.
+
+> Este arquivo é uma referência manual. Em caso de divergência com a API, o contrato OpenAPI (`/v3/api-docs` + `api-spec/`) é a fonte de verdade.
+
 ## Autenticação
 
 Todos os endpoints sob `/transactions/**` exigem um header `Authorization: Bearer <jwt>`. Endpoints de infraestrutura (`/actuator/**`) e `/auth/**` são públicos.

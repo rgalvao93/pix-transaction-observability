@@ -1,0 +1,165 @@
+openapi: 3.1.0
+info:
+  title: transaction-service — Pix Transaction API
+  description: 'Serviço transacional Pix (cash-in/cash-out) com observabilidade desde o Dia Um. Autenticação: JWT Bearer emitido por POST /auth/token (demo, sem validação de credenciais).'
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+  description: local dev
+paths:
+  /transactions:
+    post:
+      tags:
+      - transaction-controller
+      summary: Cria e processa uma transação Pix (cash-in ou cash-out)
+      description: Valida o payload, aplica idempotência por transactionId e orquestra o parceiro externo. Resposta sempre HTTP 200 com o status de negócio (PROCESSED/FAILED/ERROR) no corpo.
+      operationId: createTransaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+        required: true
+      responses:
+        '200':
+          description: Transação processada — status de negócio no corpo
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Payload inválido (validação)
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: JWT ausente ou inválido
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+      security:
+      - bearerAuth: []
+  /auth/token:
+    post:
+      tags:
+      - auth-controller
+      summary: Emite um JWT de teste para o clientId informado
+      description: Endpoint de desenvolvimento/teste, sem validação de credenciais. Serve apenas para obter um token e testar os endpoints protegidos localmente, até que um provedor de identidade seja integrado.
+      operationId: issueToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+        required: true
+      responses:
+        '200':
+          description: Token emitido
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Payload inválido (validação)
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    TransactionRequest:
+      type: object
+      description: Payload de criação de uma transação Pix
+      properties:
+        transactionId:
+          type: string
+          description: Identificador único do cliente. Reenvio do mesmo transactionId retorna a resposta já processada, sem chamar o parceiro novamente (idempotência).
+          example: txn-123456
+          minLength: 1
+        type:
+          type: string
+          description: 'Tipo da operação: cash-in (crédito) ou cash-out (débito)'
+          enum:
+          - CASH_IN
+          - CASH_OUT
+          example: CASH_IN
+        amount:
+          type: number
+          description: Valor da transação, maior que zero
+          example: 150.0
+          exclusiveMinimum: 0
+        accountId:
+          type: string
+          description: Identificador da conta no parceiro externo
+          example: acc-789
+          minLength: 1
+      required:
+      - accountId
+      - amount
+      - transactionId
+      - type
+    TransactionResponse:
+      type: object
+      description: Resultado do processamento da transação
+      properties:
+        transactionId:
+          type: string
+          description: Identificador único da transação
+          example: txn-123456
+        status:
+          type: string
+          description: 'Status de negócio da transação: PROCESSED (sucesso), FAILED (falha de negócio) ou ERROR (falha técnica)'
+          enum:
+          - PROCESSED
+          - FAILED
+          - ERROR
+          example: PROCESSED
+        reason:
+          type: string
+          description: Motivo da falha, quando aplicável (saldo insuficiente, limite diário excedido, falha de comunicação com o parceiro externo, ...)
+          example: 'null'
+    ErrorResponse:
+      type: object
+      description: Erro de validação de payload (HTTP 400)
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Momento em que o erro ocorreu
+          example: '2026-07-11T10:00:00Z'
+        status:
+          type: integer
+          format: int32
+          description: Código HTTP do erro
+          example: 400
+        errors:
+          type: array
+          description: Lista de mensagens de validação
+          example:
+          - amount must be greater than zero
+          items:
+            type: string
+    TokenRequest:
+      type: object
+      properties:
+        clientId:
+          type: string
+          description: Identificador do cliente
+          example: test-client
+          minLength: 1
+      required:
+      - clientId
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT de acesso
+          example: eyJhbGciOiJIUzI1NiJ9...
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
