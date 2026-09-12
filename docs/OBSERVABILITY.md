@@ -9,6 +9,7 @@ O projeto adota observabilidade como requisito de primeira classe: logs, métric
 - `TransactionService` loga (via SLF4J) `transactionId`, o status resultante, o motivo de falha e o tempo total de processamento em cada transação; `HttpExternalPartnerClient` loga cada tentativa de chamada ao parceiro que falhar; `PartnerService` loga cada `transfer`/`verify-balance` com falha ou conta desconhecida.
 
 Exemplo real de linha de log (saída de `transaction-service`):
+
 ```json
 {
   "@timestamp": "2026-07-15T13:21:12.566Z",
@@ -28,7 +29,7 @@ Exemplo real de linha de log (saída de `transaction-service`):
 Endpoint: `GET /actuator/prometheus` (exposto via `management.endpoints.web.exposure.include=health,prometheus`, dependência `io.micrometer:micrometer-registry-prometheus`).
 
 | Métrica | Tipo | Descrição |
-|---------|------|-----------|
+| --- | --- | --- |
 | `http_server_requests_seconds` | histogram | Nativa do Spring — latência por endpoint |
 | `transaction_processing_duration_seconds` | histogram (percentile histogram habilitado) | Tempo total de processamento de uma transação, tags `type`/`status` |
 | `transaction_total` | counter | Total de transações, com tags `type` e `status` |
@@ -48,7 +49,7 @@ Endpoint: `GET /actuator/health`, com grupos `liveness` e `readiness` (`manageme
 
 Diretório: `observability/`
 
-```
+```text
 observability/
 ├── docker-compose.yml
 ├── prometheus/
@@ -65,8 +66,9 @@ observability/
 ```
 
 Serviços:
+
 | Serviço | Porta | Função |
-|---------|-------|--------|
+| --- | --- | --- |
 | Prometheus | 9090 | Coleta métricas de `/actuator/prometheus` de `transaction-service` e `external-partner-mock`, que rodam no host (`host.docker.internal:8080`/`:8081`) |
 | Grafana | 3000 | Dashboard "Pix Transaction Observability" provisionado automaticamente (login `admin`/`admin`, ou acesso anônimo como Viewer) |
 | AlertManager | 9093 | Recebe alertas do Prometheus; sem canal de notificação real configurado (demo) |
