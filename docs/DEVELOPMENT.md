@@ -12,6 +12,7 @@
 pix-transaction-observability/
 ├── README.md
 ├── docs/                          # Documentação do projeto
+│   ├── system-design.md           # Requisitos (funcionais e não-funcionais), regras de negócio, ADRs e gaps
 │   ├── architecture.md
 │   ├── API.md
 │   ├── OBSERVABILITY.md

@@ -94,7 +94,7 @@ Quando o `external-partner-mock` não responde dentro do timeout configurado (me
 | Endpoint | Descrição |
 |----------|-----------|
 | `GET /actuator/health` | Status geral da aplicação (liveness/readiness) |
-| `GET /actuator/prometheus` | *Planejado, Fase 4.* Métricas no formato Prometheus — hoje o `pom.xml` não inclui `micrometer-registry-prometheus` e o endpoint não está exposto em `application.properties`. |
+| `GET /actuator/prometheus` | Métricas no formato Prometheus (`micrometer-registry-prometheus`), coletadas pela stack de observabilidade. |
 
 Ver detalhes em [`OBSERVABILITY.md`](./OBSERVABILITY.md).
 
