@@ -1,0 +1,57 @@
+name: OpenAPI contract drift
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Check api-spec vs /v3/api-docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install PyYAML (export script)
+        run: python3 -m pip install --user PyYAML
+
+      - name: Start external-partner-mock (:8081)
+        working-directory: external-partner-mock
+        run: |
+          ./mvnw -q -B spring-boot:run > /tmp/mock.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8081/actuator/health/liveness >/dev/null && break
+            sleep 5
+          done
+          curl -sf http://localhost:8081/actuator/health/liveness >/dev/null
+
+      - name: Start transaction-service (:8080)
+        working-directory: transaction-service
+        run: |
+          ./mvnw -q -B spring-boot:run > /tmp/ts.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8080/actuator/health/liveness >/dev/null && break
+            sleep 5
+          done
+          curl -sf http://localhost:8080/actuator/health/liveness >/dev/null
+
+      - name: Regenerate contract from running services
+        run: ./scripts/export-openapi.sh
+
+      - name: Fail on drift
+        run: |
+          if ! git diff --exit-code -- api-spec/; then
+            echo "::error::Drift entre a API implementada (/v3/api-docs) e o contrato versionado em api-spec/."
+            echo "Rode './scripts/export-openapi.sh' com os dois serviços no ar e commite o resultado."
+            exit 1
+          fi
