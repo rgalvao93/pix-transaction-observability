@@ -1,0 +1,8 @@
+# Artefatos de sessão de captura (Playwright MCP)
+.playwright-mcp/
+
+# Configuração local do agente
+.opencode/
+
+# Prints de demonstração (não versionar)
+prints/
