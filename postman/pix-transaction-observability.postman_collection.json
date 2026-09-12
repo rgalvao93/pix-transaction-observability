@@ -1,0 +1,317 @@
+{
+  "info": {
+    "name": "Pix Transaction Observability",
+    "description": "Coleção de endpoints do projeto Pix Transaction Observability.\n\nServiços:\n- transaction-service: http://localhost:8080\n- external-partner-mock: http://localhost:8081\n\nFluxo de uso:\n1. Execute \"Get Dev Token\".\n2. O token JWT é salvo automaticamente na variável de coleção `token`.\n3. Os demais endpoints usam {{token}} no header Authorization.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "transactionBaseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "partnerBaseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Transaction Service",
+      "item": [
+        {
+          "name": "Auth",
+          "item": [
+            {
+              "name": "Get Dev Token",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clientId\": \"test-client\"\n}"
+                },
+                "url": {
+                  "raw": "{{transactionBaseUrl}}/auth/token",
+                  "host": ["{{transactionBaseUrl}}"],
+                  "path": ["auth", "token"]
+                },
+                "description": "Emite um token JWT para testes locais (endpoint público, sem validação de credenciais).\n\nO token de resposta é salvo automaticamente na variável de coleção `token`, usada nos demais endpoints."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const jsonData = pm.response.json();",
+                      "pm.collectionVariables.set('token', jsonData.token);",
+                      "pm.test('Token salvo com sucesso', () => {",
+                      "    pm.expect(jsonData.token).to.be.a('string').and.not.to.be.empty;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Transactions",
+          "item": [
+            {
+              "name": "Create Transaction (CASH_IN)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"transactionId\": \"txn-123456\",\n  \"type\": \"CASH_IN\",\n  \"amount\": 150.00,\n  \"accountId\": \"acc-789\"\n}"
+                },
+                "url": {
+                  "raw": "{{transactionBaseUrl}}/transactions",
+                  "host": ["{{transactionBaseUrl}}"],
+                  "path": ["transactions"]
+                },
+                "description": "Processa uma transação Pix do tipo CASH_IN (recebimento).\n\nIdempotente: reenviar o mesmo transactionId retorna o resultado em cache sem nova chamada ao parceiro.\n\nEnum \"type\": CASH_IN | CASH_OUT.\n\nPossíveis status de resposta:\n- PROCESSED: sucesso\n- FAILED: saldo insuficiente / limite diário excedido / conta não disponível\n- ERROR: falha de comunicação com o parceiro (retorna HTTP 200 com status ERROR)"
+              },
+              "response": []
+            },
+            {
+              "name": "Create Transaction (CASH_OUT)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"transactionId\": \"txn-654321\",\n  \"type\": \"CASH_OUT\",\n  \"amount\": 200.00,\n  \"accountId\": \"acc-123\"\n}"
+                },
+                "url": {
+                  "raw": "{{transactionBaseUrl}}/transactions",
+                  "host": ["{{transactionBaseUrl}}"],
+                  "path": ["transactions"]
+                },
+                "description": "Processa uma transação Pix do tipo CASH_OUT (pagamento).\n\nIdempotente: reenviar o mesmo transactionId retorna o resultado em cache sem nova chamada ao parceiro.\n\nEnum \"type\": CASH_IN | CASH_OUT.\n\nPossíveis status de resposta:\n- PROCESSED: sucesso\n- FAILED: saldo insuficiente / limite diário excedido / conta não disponível\n- ERROR: falha de comunicação com o parceiro (retorna HTTP 200 com status ERROR)"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Actuator",
+          "item": [
+            {
+              "name": "Health",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{transactionBaseUrl}}/actuator/health",
+                  "host": ["{{transactionBaseUrl}}"],
+                  "path": ["actuator", "health"]
+                },
+                "description": "Health check geral (público)."
+              },
+              "response": []
+            },
+            {
+              "name": "Health Liveness",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{transactionBaseUrl}}/actuator/health/liveness",
+                  "host": ["{{transactionBaseUrl}}"],
+                  "path": ["actuator", "health", "liveness"]
+                },
+                "description": "Probe de liveness (público)."
+              },
+              "response": []
+            },
+            {
+              "name": "Health Readiness",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{transactionBaseUrl}}/actuator/health/readiness",
+                  "host": ["{{transactionBaseUrl}}"],
+                  "path": ["actuator", "health", "readiness"]
+                },
+                "description": "Probe de readiness (público). Depende da conectividade com o external-partner-mock."
+              },
+              "response": []
+            },
+            {
+              "name": "Metrics Prometheus",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{transactionBaseUrl}}/actuator/prometheus",
+                  "host": ["{{transactionBaseUrl}}"],
+                  "path": ["actuator", "prometheus"]
+                },
+                "description": "Métricas em formato Prometheus (público)."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "External Partner Mock",
+      "item": [
+        {
+          "name": "Partner",
+          "item": [
+            {
+              "name": "Verify Balance",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accountId\": \"acc-789\"\n}"
+                },
+                "url": {
+                  "raw": "{{partnerBaseUrl}}/partner/verify-balance",
+                  "host": ["{{partnerBaseUrl}}"],
+                  "path": ["partner", "verify-balance"]
+                },
+                "description": "Verifica se a conta existe e está disponível no parceiro mock.\n\nContas de demonstração: acc-123 (saldo 1000.00), acc-789 (saldo 500.00).\nContas desconhecidas retornam available: false."
+              },
+              "response": []
+            },
+            {
+              "name": "Transfer",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accountId\": \"acc-789\",\n  \"amount\": 150.00,\n  \"type\": \"CASH_IN\"\n}"
+                },
+                "url": {
+                  "raw": "{{partnerBaseUrl}}/partner/transfer",
+                  "host": ["{{partnerBaseUrl}}"],
+                  "path": ["partner", "transfer"]
+                },
+                "description": "Executa uma transferência simulada.\n\nCASH_IN soma ao saldo, CASH_OUT subtrai.\n\nPode falhar aleatoriamente (default 5%): falha simulada retorna HTTP 200 com success: false."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Actuator",
+          "item": [
+            {
+              "name": "Health",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{partnerBaseUrl}}/actuator/health",
+                  "host": ["{{partnerBaseUrl}}"],
+                  "path": ["actuator", "health"]
+                },
+                "description": "Health check geral (público)."
+              },
+              "response": []
+            },
+            {
+              "name": "Health Liveness",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{partnerBaseUrl}}/actuator/health/liveness",
+                  "host": ["{{partnerBaseUrl}}"],
+                  "path": ["actuator", "health", "liveness"]
+                },
+                "description": "Probe de liveness (público)."
+              },
+              "response": []
+            },
+            {
+              "name": "Health Readiness",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{partnerBaseUrl}}/actuator/health/readiness",
+                  "host": ["{{partnerBaseUrl}}"],
+                  "path": ["actuator", "health", "readiness"]
+                },
+                "description": "Probe de readiness (público)."
+              },
+              "response": []
+            },
+            {
+              "name": "Metrics Prometheus",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{partnerBaseUrl}}/actuator/prometheus",
+                  "host": ["{{partnerBaseUrl}}"],
+                  "path": ["actuator", "prometheus"]
+                },
+                "description": "Métricas em formato Prometheus (público)."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
