@@ -30,20 +30,20 @@ jobs:
         run: |
           ./mvnw -q -B spring-boot:run > /tmp/mock.log 2>&1 &
           for i in $(seq 1 60); do
-            curl -sf http://localhost:8081/actuator/health/liveness >/dev/null && break
+            curl -fs http://localhost:8081/v3/api-docs 2>/dev/null | grep -q '"openapi"' && break
             sleep 5
           done
-          curl -sf http://localhost:8081/actuator/health/liveness >/dev/null
+          curl -fs http://localhost:8081/v3/api-docs | grep -q '"openapi"'
 
       - name: Start transaction-service (:8080)
         working-directory: transaction-service
         run: |
           ./mvnw -q -B spring-boot:run > /tmp/ts.log 2>&1 &
           for i in $(seq 1 60); do
-            curl -sf http://localhost:8080/actuator/health/liveness >/dev/null && break
+            curl -fs http://localhost:8080/v3/api-docs 2>/dev/null | grep -q '"openapi"' && break
             sleep 5
           done
-          curl -sf http://localhost:8080/actuator/health/liveness >/dev/null
+          curl -fs http://localhost:8080/v3/api-docs | grep -q '"openapi"'
 
       - name: Regenerate contract from running services
         run: ./scripts/export-openapi.sh
