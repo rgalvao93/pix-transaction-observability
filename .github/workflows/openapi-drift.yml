@@ -48,6 +48,14 @@ jobs:
       - name: Regenerate contract from running services
         run: ./scripts/export-openapi.sh
 
+      - name: Dump service logs (on failure)
+        if: failure()
+        run: |
+          echo '===== /tmp/ts.log (transaction-service) ====='
+          tail -100 /tmp/ts.log || true
+          echo '===== /tmp/mock.log (external-partner-mock) ====='
+          tail -100 /tmp/mock.log || true
+
       - name: Fail on drift
         run: |
           if ! git diff --exit-code -- api-spec/; then
