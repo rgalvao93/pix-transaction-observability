@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: transaction-service — Pix Transaction API
-  description: 'Serviço transacional Pix (cash-in/cash-out) com observabilidade desde o Dia Um. Autenticação: JWT Bearer emitido por POST /auth/token (demo, sem validação de credenciais).'
+  description: 'Serviço transacional Pix (cash-in/cash-out) com observabilidade.Autenticação: JWT Bearer emitido por POST /auth/token (demo, sem validação de credenciais).'
   version: 1.0.0
 servers:
 - url: http://localhost:8080
