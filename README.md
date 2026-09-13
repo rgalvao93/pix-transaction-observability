@@ -6,7 +6,7 @@ Este repositório implementa um MVP projetado com **princípios de observabilida
 O componente principal é um serviço transacional Pix que lida com operações de **cash-in** e **cash-out**. Ele opera em um ambiente regulamentado onde a confiabilidade e a rápida resolução de incidentes são fundamentais. O vocabulário de domínio e o glossário ficam em [`CONTEXT.md`](CONTEXT.md) — leia antes de explorar o código.
 
 ## 🎯 Objetivos
-- **Observabilidade desde o Dia Um**: Logs, métricas e traces são nativos, não uma reflexão tardia.
+- **Observabilidade desde o Dia Um**: Logs, métricas e health checks são nativos, não uma reflexão tardia (tracing distribuído está no roadmap — Fase 6 de [`PLAN.md`](PLAN.md)).
 - **Resiliência**: Tratamento de latência e erros provenientes de parceiros externos (retry com backoff, timeout).
 - **Simulação Realista**: Um ambiente autônomo para testar respostas operacionais.
 
@@ -101,11 +101,14 @@ Cada serviço possui um `Dockerfile` multi-stage com usuário não-root e suport
 
 ## 📖 Documentação
 
+- [Índice da Documentação](docs/README.md) — Mapa de navegação e hierarquia de leitura
+- [Plano do Projeto](PLAN.md) — Fases, roadmap e status atual
 - [Contexto do Domínio](CONTEXT.md) — Glossário e regras de negócio centrais
 - [System Design](docs/system-design.md) — Levantamento de requisitos funcionais e não-funcionais, regras de negócio, casos de uso, decisões de arquitetura e gaps
 - [Arquitetura](docs/architecture.md) — Componentes, fluxos de cash-in/cash-out e known issues
 - [API](docs/API.md) — Endpoints, schemas e exemplos de requisição/resposta
 - [Observabilidade](docs/OBSERVABILITY.md) — Logs, métricas, health checks e stack Prometheus/Grafana
+- [Guia de Operação / Runbook](docs/RUNBOOK.md) — Cenários reproduzíveis e diagnóstico de incidentes
 - [Guia de Desenvolvimento](docs/DEVELOPMENT.md) — Setup local, estrutura de pastas e convenções
 - [Deploy](docs/DEPLOY.md) — Deploy no Google Cloud Run
 - [ADRs](docs/adr/README.md) — Architecture Decision Records (ADR-001–007 em `system-design.md` §8; ADR-008+ em `docs/adr/`)

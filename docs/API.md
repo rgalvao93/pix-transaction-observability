@@ -135,8 +135,10 @@ Duas contas de demonstração já vêm pré-carregadas em memória: `acc-123` (s
 // Request
 { "accountId": "acc-789", "amount": 150.00, "type": "CASH_IN" }
 
-// Response
-{ "success": true, "partnerReference": "psp-ref-987" }
+// Response (partnerReference é gerada aleatoriamente no formato psp-ref-<número>)
+{ "success": true, "partnerReference": "psp-ref-123456789" }
 ```
 
 `transfer` aplica o delta (`CASH_IN` soma, `CASH_OUT` subtrai) ao saldo em memória quando `success: true`. Ambos os endpoints simulam latência artificial e uma taxa de falha configuráveis (`partner.mock.latency.min-ms`/`max-ms`, `partner.mock.failure-rate` — ver [`architecture.md`](./architecture.md)); uma falha simulada retorna `success: false` com HTTP 200, não um erro HTTP.
+
+> Uma falha simulada (`success: false` com HTTP 200) **não dispara retry** no `transaction-service` — o retry só ocorre em erro de transporte/HTTP (`RestClientException`: timeout, conexão recusada). A resposta `success: false` é tratada como falha de negócio e vira `FAILED` com motivo `"falha na transferência"`.

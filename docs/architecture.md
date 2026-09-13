@@ -73,7 +73,17 @@ Configuração Docker Compose com Prometheus (scrape de `/actuator/prometheus` d
 
 ## Fluxo — Cash-Out
 
-Mesmo fluxo do cash-in, com verificações adicionais entre os passos 4 e 6:
+1. Cliente autentica via `POST /auth/token` e envia `POST /transactions` `{ type: CASH_OUT, accountId, amount }` com Bearer token
+2. `transaction-service` valida o payload (campos obrigatórios, amount > 0, type é CASH_IN/CASH_OUT)
+3. Se `transactionId` já foi processado antes → retorna a resposta em cache (idempotência), sem repetir os passos abaixo
+4. `transaction-service` chama `external-partner-mock`: `POST /partner/verify-balance`
+5. Se a conta não estiver disponível ou o saldo for menor que o valor → status = `FAILED` ("saldo insuficiente")
+6. `transaction-service` tenta **reservar o valor no limite diário de cash-out** (`DailyLimitTracker`); se exceder o limite → status = `FAILED` ("limite diário excedido")
+7. `transaction-service` chama `external-partner-mock`: `POST /partner/transfer`
+8. Se o parceiro aceitar → status = `PROCESSED`; se recusar → status = `FAILED`; se a comunicação falhar após as tentativas de retry → status = `ERROR`
+9. Resposta retornada ao cliente (sempre 200 OK, com o status no corpo) + logs emitidos em cada etapa
+
+> **Edge case (RN-05 / GAP-8):** se a transferência falhar **depois** da reserva do limite diário (passo 6), a reserva **não é revertida** — falhas de cash-out contam contra o limite diário.
 
 ## Status de Transação
 
@@ -90,7 +100,7 @@ Mesmo fluxo do cash-in, com verificações adicionais entre os passos 4 e 6:
 | `transaction-service/` | Microsserviço principal | Lógica de negócio, segurança JWT e testes implementados (Fase 2) |
 | `external-partner-mock/` | Mock do parceiro externo | Implementado (Fase 3) |
 | `observability/` | Stack Prometheus/Grafana/AlertManager | Implementado (Fase 4) |
-| `docs/` | Documentação e diagramas | Em construção |
+| `docs/` | Documentação e diagramas | Concluído — índice em `docs/README.md` |
 
 ## Notas de Compatibilidade (Spring Boot 4)
 

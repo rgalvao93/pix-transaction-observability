@@ -28,7 +28,7 @@ MVP de um **serviço transacional Pix** que processa operações de **cash-in** 
 | **FAILED** | Falha de negócio (saldo, limite, conta, recusa) — esperada e categorizada | status de negócio |
 | **ERROR** | Falha técnica: comunicação exaurida com o parceiro após retries | status de negócio |
 | **Idempotência** | Reenvios do mesmo `transactionId` não reprocessam nem duplicam efeitos | chaveada por `transactionId` para o cache in-memory |
-| **Limite diário de cash-out** | Total cash-out permitido por conta por dia; reserva feita antes de transferir | `DailyLimitTracker` in-memory |
+| **Limite diário de cash-out** | Total cash-out permitido por conta por dia (default `5000.00`, config `transaction.cash-out.daily-limit`); reserva feita antes de transferir | `DailyLimitTracker` in-memory |
 | **Retry com backoff** | Repetição de chamada de comunicação ao parceiro com backoff crescente (200ms · attempt) até `max-attempts` (3) | apenas falhas de comunicação disparam retry |
 | **Readiness / Liveness** | Sinais de saúde do serviço; readiness de `transaction-service` inclui `partnerConnectivity` | `/actuator/health` |
 | **SLI / SLO** | Indicador / objetivo de nível de serviço | SLIs instrumentados; SLOs formais não definidos (gap) |

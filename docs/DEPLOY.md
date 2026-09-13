@@ -30,6 +30,8 @@ gcloud builds submit --tag gcr.io/PROJECT_ID/transaction-service transaction-ser
 gcloud builds submit --tag gcr.io/PROJECT_ID/external-partner-mock external-partner-mock/
 ```
 
+> **Nota:** `gcr.io` é o Container Registry legado. Projetos novos frequentemente usam o Artifact Registry (ex.: `us-central1-docker.pkg.dev/PROJECT_ID/...`). Ajuste o domínio do registry conforme a configuração do seu projeto.
+
 ### 2. Deploy do `external-partner-mock`
 
 ```bash
@@ -53,9 +55,16 @@ gcloud run deploy transaction-service \
 ## Verificação pós-deploy
 
 ```bash
-# URLs após deploy
-https://transaction-service-xxx-uc.a.run.dev/actuator/health/readiness
-https://external-partner-mock-xxx-uc.a.run.dev/actuator/health/readiness
+# URLs após deploy — substitua pelo domínio real gerado pelo Cloud Run
+https://<transaction-service>-<hash>-<region>.run.app/actuator/health/readiness
+https://<external-partner-mock>-<hash>-<region>.run.app/actuator/health/readiness
+```
+
+O domínio exato (`*.run.app`/`*.a.run.app`) varia conforme o projeto. Obtenha a URL real com:
+
+```bash
+gcloud run services describe transaction-service --region us-central1 --format='value(status.url)'
+gcloud run services describe external-partner-mock --region us-central1 --format='value(status.url)'
 ```
 
 Ambos devem retornar `200 OK` com `{"status":"UP",...}`.
