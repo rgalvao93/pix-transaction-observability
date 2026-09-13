@@ -75,6 +75,8 @@ Serviços:
 
 Regras de alerta (`prometheus/rules.yml`): `HighTransactionErrorRate` (taxa de `status=ERROR` > 5% em 5m), `PartnerCallFailuresHigh` (>5 falhas de chamada ao parceiro em 10m), `TransactionServiceDown` e `ExternalPartnerMockDown` (target fora do ar por 1m).
 
+> As regras que avaliam métricas de negócio (`transaction_total`, `external_partner_*`) dependem do `transaction-service`, o único que emite essas séries; o `external-partner-mock` contribui apenas com métricas HTTP nativas do Actuator e com o alvo `up{job="external-partner-mock"}`.
+
 Painéis do dashboard: serviços disponíveis (`up`), transações por status, taxa de erro, latência p95 de processamento, latência p95 de chamada ao parceiro, falhas de chamada ao parceiro.
 
 ### Como subir a stack
@@ -91,4 +93,4 @@ cd observability && docker compose up -d             # terminal 3
 
 ## Rastreamento (Traces)
 
-Mencionado no README como objetivo (OpenTelemetry), mas **ainda não escopado em nenhuma fase do plano atual**. Pode ser adicionado como Fase 6 se houver necessidade de tracing distribuído entre `transaction-service` e `external-partner-mock`.
+Tracing distribuído é o objetivo da **Fase 6** de [`PLAN.md`](../PLAN.md): adicionar OpenTelemetry (SDK + OTLP) nos dois serviços, propagar `traceId`/`spanId` nas chamadas `transaction-service` → `external-partner-mock`, coletar em um backend de traces (ex.: Jaeger ou Tempo do Grafana) e correlacionar trace → log → métrica. Hoje a correlação é **manual** via `transactionId` nos logs estruturados (RNF-09 parcial) — nenhum SDK OpenTelemetry está em uso.

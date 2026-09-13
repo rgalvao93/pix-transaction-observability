@@ -10,13 +10,22 @@
 
 ```
 pix-transaction-observability/
-├── README.md
+├── README.md                      # Visão geral do projeto
+├── PLAN.md                        # Plano em fases e roadmap
+├── CONTEXT.md                     # Glossário e contexto de domínio
 ├── docs/                          # Documentação do projeto
+│   ├── README.md                  # Índice de navegação da documentação
 │   ├── system-design.md           # Requisitos (funcionais e não-funcionais), regras de negócio, ADRs e gaps
-│   ├── architecture.md
-│   ├── API.md
-│   ├── OBSERVABILITY.md
-│   └── DEVELOPMENT.md
+│   ├── architecture.md            # Componentes e fluxos cash-in/cash-out
+│   ├── API.md                     # Endpoints, schemas e exemplos
+│   ├── OBSERVABILITY.md           # Logs, métricas, health checks e stack
+│   ├── DEVELOPMENT.md             # Este arquivo
+│   ├── DEPLOY.md                  # Deploy no Google Cloud Run
+│   ├── RUNBOOK.md                 # Operação e diagnóstico de incidentes
+│   └── adr/                       # ADRs individualizados (ADR-008+) — ADR-001–007 em system-design.md §8
+├── api-spec/                      # Contratos OpenAPI 3.1 versionados (fonte de verdade)
+├── postman/                       # Coleção Postman para testes manuais
+├── scripts/                       # Scripts de apoio (export-openapi.sh)
 ├── transaction-service/           # Microsserviço principal
 │   ├── pom.xml
 │   └── src/
@@ -115,5 +124,5 @@ Gere tráfego de teste (sucesso, saldo insuficiente, falha simulada) para ver os
 
 ## Branches e Commits
 
-- Branch de desenvolvimento atual: `claude/project-documentation-c3Fgv`.
+- Branch de integração: `main`. Mudanças chegam via feature branches (a documentação inicial foi entregue na branch `claude/project-documentation-c3Fgv`).
 - Commits em português, no imperativo, descrevendo a mudança (ex: `atualiza TransactionService com lógica de cash-in`).

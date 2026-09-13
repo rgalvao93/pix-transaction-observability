@@ -344,6 +344,8 @@ flowchart LR
     AM -->|sem canal configurado (demo)| CHAN[X]
 ```
 
+> As métricas de negócio (`transaction_total`, `transaction_processing_duration_seconds`, `external_partner_call_duration_seconds`, `external_partner_calls_failed_total`) são emitidas **apenas pelo `transaction-service`**. O `external-partner-mock` publica somente métricas HTTP nativas do Actuator e o alvo `up{job="external-partner-mock"}`.
+
 ### 7.3 Alertas configurados (`prometheus/rules.yml`)
 
 | Alerta | Condição | Severidade |
@@ -392,7 +394,7 @@ flowchart LR
 
 - **Contexto:** processar a transação poderia ser assíncrono (fila + worker) para desacoplar da latência do parceiro.
 - **Decisão:** manter chamada **síncrona** (`POST /transactions` bloqueante) com cache de idempotência e resposta **sempre 200** contendo o status final.
-- **Consequências:** simulação simples e determinística do efeito da latência do parceiro; expõe o tempo de retry ao cliente (até ~2,6s no pior caso, com 3 tentativas + 200ms/400ms de backoff).
+- **Consequências:** simulação simples e determinística do efeito da latência do parceiro; expõe o tempo de retry ao cliente — cada tentativa herda os timeouts (`partner.connect-timeout-ms`=1s, `partner.read-timeout-ms`=2s), 3 tentativas com backoff 200ms/400ms, configurável via `partner.retry.*`.
 
 ### ADR-005 — HTTP 200 sempre + status de negócio no corpo
 
@@ -404,13 +406,17 @@ flowchart LR
 
 - **Contexto:** falhas transitórias do parceiro (timeout, conexão) devem ser absorvidas.
 - **Decisão:** retry em `HttpExternalPartnerClient` com `max-attempts=3`, `backoff-ms=200` aplicado de forma crescente (`200ms`, `400ms`); apenas falhas de comunicação (`RestClientException`) disparam retry — falha de negócio não.
-- **Consequências:** transação sobrevive a quedas curtas; pior caso soma até ~2,6s ao p95 se todas as tentativas falharem; alerta `PartnerCallFailuresHigh` detecta indisponibilidade prolongada.
+- **Consequências:** transação sobrevive a quedas curtas; em indisponibilidade prolongada cada tentativa bloqueia até os timeouts configurados (1s conexão / 2s leitura) com backoff 200ms/400ms — a duração real depende do tipo de falha (conexão recusada falha rápido; leitura travada acumula vários segundos); alerta `PartnerCallFailuresHigh` detecta indisponibilidade prolongada.
 
 ### ADR-007 — Java 21 + Spring Boot 4
 
 - **Contexto:** base moderna para o exemplo; Spring Boot 4 modularizou dependências antes empacotadas no `spring-boot-starter-web`.
 - **Decisão:** Java 21 (LTS), Spring Boot 4, Maven Wrapper; Jackson 3 (`tools.jackson.*`) e `@MockitoBean`/`spring-boot-webmvc-test` nos testes.
 - **Consequências:** notes de compatibilidade registradas em [architecture.md](./architecture.md#notas-de-compatibilidade-spring-boot-4); curva de aprendizado para quem vem do Boot 3.
+
+### ADR-008+
+
+ADR-008 em diante são arquivos individuais em [`docs/adr/`](./adr/README.md) (ex.: [ADR-008 — Contrato OpenAPI 3.1 + spec-driven](./adr/0008-openapi-contract.md)).
 
 ---
 
@@ -472,10 +478,14 @@ flowchart LR
 
 ### Roadmap sugerido pós-MVP
 
+O roadmap operacional em fases vive em [`PLAN.md`](../PLAN.md) — fonte de verdade. Não duplique esta seção:
+
 ```mermaid
 flowchart LR
-    A[Fase 5<br/>estabilização: docs, CI, rollback GAP-8] --> B[Fase 6<br/>tracing OTel + coleta de logs] --> C[Fase 7<br/>persistência + auditoria] --> D[Fase 8<br/>IdP real + segredos] --> E[Fase 9<br/>eventos/outbox + escala]
+    A[Fase 5<br/>backlog / endurecimento<br/>GAP-8, GAP-9, limpeza e CI] --> B[Fase 6<br/>OpenTelemetry (GAP-1)<br/>tracing + coleta de logs] --> C[Fase 7<br/>resiliência avançada<br/>circuit breaker + carga]
 ```
+
+GAPs ainda sem fase dedicada (GAP-2 persistência, GAP-3 auditoria, GAP-4 IdP, GAP-5 segredos, GAP-6 eventos, GAP-7 SLOs) permanecem como backlog priorizável.
 
 ---
 
@@ -486,7 +496,7 @@ flowchart LR
 | Reserva de limite diário não revertida em falha de transferência (cash-out) | R-1 | Alta | Médio | [GAP-8]: rollback de reserva; teste de regressão (ver nota da RN-05) |
 | Perda de estado em restart (idempotência, limites, saldos em memória) | R-2 | Alta | Alto | [GAP-2]/[GAP-3]: persistência; até lá, documentar que restart perde trilha |
 | Segredo JWT demo usado em produção | R-3 | Média | Alto | [GAP-4]/[GAP-5]: IdP real + secret manager com rotação; alerta de config |
-| Retry bloqueante (+2,6s) degrada p95 quando o parceiro está baixo | R-4 | Média | Médio | [GAP-6]: fila/async; ou reduzir max-attempts; alerta `PartnerCallFailuresHigh` |
+| Retry bloqueante (timeouts × tentativas) degrada o p95 quando o parceiro está baixo | R-4 | Média | Médio | [GAP-6]: fila/async; ou reduzir `partner.retry.max-attempts`; alerta `PartnerCallFailuresHigh` |
 | Stack de observabilidade sem **boot real** validado (só `docker compose config`) | R-5 | Média | Médio | Executar `docker compose up` completo em ambiente com daemon Docker e validar targets no Prometheus |
 | Documentação desatualizada vs. código (ex.: `/actuator/prometheus` marcado como planejado) | R-6 | Média | Baixo | Revisão de docs no mesmo fluxo de mudanças; correção aplicada nesta entrega |
 

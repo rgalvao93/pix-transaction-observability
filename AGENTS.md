@@ -36,4 +36,4 @@ Single-context: `CONTEXT.md` na raiz + ADRs em `docs/adr/` (ADR-001–007 ainda 
 ## API e observabilidade
 
 - Swagger UI: `http://localhost:8080/swagger-ui.html` (transaction-service) e `http://localhost:8081/swagger-ui.html` (external-partner-mock); contrato em `/v3/api-docs`.
-- Docs manuais: `docs/API.md`, `docs/OBSERVABILITY.md`, `docs/architecture.md`, `docs/system-design.md`.
+- Docs manuais: índice em `docs/README.md`; principais: `docs/API.md`, `docs/OBSERVABILITY.md`, `docs/architecture.md`, `docs/system-design.md`, `docs/DEPLOY.md`, `docs/RUNBOOK.md`.
