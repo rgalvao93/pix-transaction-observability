@@ -1,9 +1,20 @@
 package com.rodrigogalvao.transaction.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(name = "TransactionResponse", description = "Resultado do processamento da transação")
 public class TransactionResponse {
 
+    @Schema(description = "Identificador único da transação", example = "txn-123456")
     private String transactionId;
+
+    @Schema(description = "Status de negócio da transação: PROCESSED (sucesso), FAILED (falha de negócio) ou ERROR (falha técnica)",
+            example = "PROCESSED",
+            allowableValues = {"PROCESSED", "FAILED", "ERROR"})
     private String status;
+
+    @Schema(description = "Motivo da falha, quando aplicável (saldo insuficiente, limite diário excedido, falha de comunicação com o parceiro externo, ...)",
+            example = "null")
     private String reason;
 
     public TransactionResponse() {

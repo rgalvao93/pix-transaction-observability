@@ -1,6 +1,7 @@
 package com.rodrigogalvao.partnermock.service;
 
 import com.rodrigogalvao.partnermock.model.TransactionType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,9 +83,14 @@ public class PartnerService {
         }
     }
 
-    public record BalanceResult(String accountId, BigDecimal balance, boolean available) {
+    public record BalanceResult(
+            @Schema(description = "Identificador da conta", example = "acc-789") String accountId,
+            @Schema(description = "Saldo atual da conta", example = "500.00") BigDecimal balance,
+            @Schema(description = "Conta disponível no parceiro", example = "true") boolean available) {
     }
 
-    public record TransferResult(boolean success, String partnerReference) {
+    public record TransferResult(
+            @Schema(description = "Sucesso da transferência", example = "true") boolean success,
+            @Schema(description = "Referência do parceiro, quando houve sucesso", example = "psp-ref-987") String partnerReference) {
     }
 }

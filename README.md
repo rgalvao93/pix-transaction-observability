@@ -57,3 +57,9 @@ A aplicação iniciará na porta `8080` (padrão).
 - [API](docs/API.md) — Endpoints, schemas e exemplos de requisição/resposta
 - [Observabilidade](docs/OBSERVABILITY.md) — Logs, métricas, health checks e stack Prometheus/Grafana
 - [Guia de Desenvolvimento](docs/DEVELOPMENT.md) — Setup local, estrutura de pastas e convenções
+
+A **API também é documentada por contrato OpenAPI 3.1** (springdoc):
+
+- Swagger UI: `http://localhost:8080/swagger-ui.html` (transaction-service) e `http://localhost:8081/swagger-ui.html` (external-partner-mock)
+- Contrato canônico em runtime: `/v3/api-docs` em cada serviço
+- Contrato versionado (fonte de verdade): [`api-spec/`](api-spec/) — regerado por `scripts/export-openapi.sh` e verificado por drift check no CI

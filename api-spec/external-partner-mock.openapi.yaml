@@ -1,0 +1,167 @@
+openapi: 3.1.0
+info:
+  title: external-partner-mock — Pix External Partner API
+  description: 'Simula o parceiro externo (PSP / Banco Central), fonte de verdade do saldo, com latência artificial e taxa de falha configuráveis. Autenticação: JWT Bearer assinado com o mesmo segredo do transaction-service.'
+  version: 1.0.0
+servers:
+- url: http://localhost:8081
+  description: local dev
+paths:
+  /partner/verify-balance:
+    post:
+      tags:
+      - partner-controller
+      summary: Verifica saldo e disponibilidade de uma conta
+      description: 'Contas demo conhecidas: acc-123 (1000.00) e acc-789 (500.00). Qualquer outra accountId é tratada como desconhecida (available: false).'
+      operationId: verifyBalance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyBalanceRequest'
+        required: true
+      responses:
+        '200':
+          description: Saldo e disponibilidade da conta
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/BalanceResult'
+        '400':
+          description: Payload inválido (validação)
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: JWT ausente ou inválido
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/BalanceResult'
+      security:
+      - bearerAuth: []
+  /partner/transfer:
+    post:
+      tags:
+      - partner-controller
+      summary: Executa transferência aplicando o delta ao saldo
+      description: 'CASH_IN soma, CASH_OUT subtrai. Uma falha simulada (taxa de falha configurável) retorna success: false com HTTP 200, não um erro HTTP.'
+      operationId: transfer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Resultado da transferência (success: true/false)'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TransferResult'
+        '400':
+          description: Payload inválido (validação)
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: JWT ausente ou inválido
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TransferResult'
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    VerifyBalanceRequest:
+      type: object
+      description: Consulta de saldo/disponibilidade da conta
+      properties:
+        accountId:
+          type: string
+          description: Identificador da conta no parceiro
+          example: acc-789
+          minLength: 1
+      required:
+      - accountId
+    BalanceResult:
+      type: object
+      properties:
+        accountId:
+          type: string
+          description: Identificador da conta
+          example: acc-789
+        balance:
+          type: number
+          description: Saldo atual da conta
+          example: 500.0
+        available:
+          type: boolean
+          description: Conta disponível no parceiro
+          example: true
+    ErrorResponse:
+      type: object
+      description: Erro de validação de payload (HTTP 400)
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Momento em que o erro ocorreu
+          example: '2026-07-11T10:00:00Z'
+        status:
+          type: integer
+          format: int32
+          description: Código HTTP do erro
+          example: 400
+        errors:
+          type: array
+          description: Lista de mensagens de validação
+          example:
+          - accountId is required
+          items:
+            type: string
+    TransferRequest:
+      type: object
+      description: Pedido de transferência ao parceiro externo
+      properties:
+        accountId:
+          type: string
+          description: Identificador da conta no parceiro
+          example: acc-789
+          minLength: 1
+        amount:
+          type: number
+          description: Valor a transferir, maior que zero
+          example: 150.0
+          exclusiveMinimum: 0
+        type:
+          type: string
+          description: 'Tipo da operação: cash-in (crédito) ou cash-out (débito)'
+          enum:
+          - CASH_IN
+          - CASH_OUT
+          example: CASH_IN
+      required:
+      - accountId
+      - amount
+      - type
+    TransferResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Sucesso da transferência
+          example: true
+        partnerReference:
+          type: string
+          description: Referência do parceiro, quando houve sucesso
+          example: psp-ref-987
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
