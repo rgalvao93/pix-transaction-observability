@@ -11,7 +11,7 @@ O componente principal é um serviço transacional Pix que lida com operações 
 - **Simulação Realista**: Um ambiente autônomo para testar respostas operacionais.
 
 ## 🚀 Tecnologias
-- **Java 21**
+- **Java 25 (LTS)**
 - **Spring Boot 4**
 - **Spring Boot Actuator + Micrometer** (métricas no formato Prometheus)
 - **Spring Security + JWT (jjwt)** — autenticação Bearer nos endpoints de transação
@@ -34,7 +34,7 @@ O componente principal é um serviço transacional Pix que lida com operações 
 ## ⚡ Começando
 
 ### Pré-requisitos
-- Java 21+
+- Java 25+
 - Maven Wrapper incluído (não precisa instalar o Maven manualmente)
 - Docker + Docker Compose *(apenas para subir a stack de observabilidade)*
 

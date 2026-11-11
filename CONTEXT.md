@@ -47,4 +47,4 @@ MVP de um **serviço transacional Pix** que processa operações de **cash-in** 
 ## Decisões de arquitetura
 
 - ADR-001 a ADR-007: registrados em `docs/system-design.md` (§8). A partir do ADR-008, novos ADRs são arquivos individuais em `docs/adr/`.
-- Resumo em uma linha: estado em memória no MVP, JWT demo com segredo compartilhado, operação síncrona REST, HTTP 200 + status de negócio, retry com backoff, Java 21 + Spring Boot 4.
+- Resumo em uma linha: estado em memória no MVP, JWT demo com segredo compartilhado, operação síncrona REST, HTTP 200 + status de negócio, retry com backoff, Java 25 + Spring Boot 4.

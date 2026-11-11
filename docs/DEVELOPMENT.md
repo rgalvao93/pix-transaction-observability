@@ -2,7 +2,7 @@
 
 ## Pré-requisitos
 
-- Java 21+
+- Java 25+
 - Maven Wrapper incluído (não precisa instalar Maven manualmente)
 - Docker + Docker Compose *(necessário apenas para subir a stack de observabilidade — Prometheus/Grafana/AlertManager)*
 

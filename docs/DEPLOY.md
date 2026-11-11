@@ -1,6 +1,6 @@
 # Deploy no Google Cloud Run
 
-Este projeto consiste em dois serviços Spring Boot (Java 21) que devem ser
+Este projeto consiste em dois serviços Spring Boot (Java 25) que devem ser
 deploiados como containers no Cloud Run. Cada serviço tem seu próprio
 `Dockerfile` e `Docker image`.
 

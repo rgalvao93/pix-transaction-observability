@@ -36,7 +36,7 @@ O sistema simula um serviço transacional Pix operando em ambiente regulamentado
 
 ### transaction-service
 
-Microsserviço principal (Spring Boot 4 / Java 21). Recebe requisições de transação Pix, valida regras de negócio, orquestra a chamada ao parceiro externo e retorna o resultado. Responsável por:
+Microsserviço principal (Spring Boot 4 / Java 25). Recebe requisições de transação Pix, valida regras de negócio, orquestra a chamada ao parceiro externo e retorna o resultado. Responsável por:
 
 - Validação de payload (`jakarta.validation`), incluindo o enum `TransactionType` (`CASH_IN`/`CASH_OUT`)
 - Lógica de cash-in / cash-out, com idempotência por `transactionId` (`TransactionRepository`, em memória)
@@ -47,7 +47,7 @@ Microsserviço principal (Spring Boot 4 / Java 21). Recebe requisições de tran
 
 ### external-partner-mock
 
-Serviço separado (Spring Boot 4 / Java 21, porta 8081) que simula o comportamento de um parceiro externo (PSP ou Banco Central). Responsável por:
+Serviço separado (Spring Boot 4 / Java 25, porta 8081) que simula o comportamento de um parceiro externo (PSP ou Banco Central). Responsável por:
 
 - Contas em memória pré-carregadas (`acc-123`, `acc-789`) com saldo — fonte de verdade do saldo "bancário", já que o `transaction-service` não persiste saldos
 - `POST /partner/verify-balance` e `POST /partner/transfer` (ver [`API.md`](./API.md))

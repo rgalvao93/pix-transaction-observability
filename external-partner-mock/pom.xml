@@ -14,7 +14,7 @@
 	<name>external-partner-mock</name>
 	<description>Mock of the external Pix partner (PSP / Banco Central) with configurable latency and failures</description>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>25</java.version>
 	</properties>
 	<dependencies>
 		<dependency>

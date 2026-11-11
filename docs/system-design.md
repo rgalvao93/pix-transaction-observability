@@ -110,7 +110,7 @@ Legenda de status de implementação: ✅ implementado · 🟡 parcialmente impl
 | **RNF-03** | Segurança | Autenticação JWT em endpoints de negócio; segredo não embutido em código (somente valor *default* de demonstração, sobrescrevível por env). | 🟡 (auth demo — sem IdP real) |
 | **RNF-04** | Performance | Latência de leitura ao parceiro limitada a 2s; p95 de processamento e de chamada ao parceiro monitorados (percentile histograms). | ✅ |
 | **RNF-05** | Disponibilidade | Probes de liveness/readiness configurados; indisponibilidade detectada e alertada via Prometheus/AlertManager. | ✅ |
-| **RNF-06** | Manutenibilidade | Estrutura em camadas por serviço, convenções documentadas, Java 21 + Spring Boot 4. | ✅ |
+| **RNF-06** | Manutenibilidade | Estrutura em camadas por serviço, convenções documentadas, Java 25 + Spring Boot 4. | ✅ |
 | **RNF-07** | Testabilidade | Testes unitários e de integração por serviço cobrindo fluxos principais e falhas. | ✅ |
 | **RNF-08** | Portabilidade | Execução local com Maven Wrapper (sem instalar Maven); stack de observabilidade via Docker Compose; configuração por variáveis de ambiente. | ✅ |
 | **RNF-09** | Rastreabilidade | IDs de transação presentes nos logs para correlação manual. Tracing distribuído (correlação automática entre serviços) **não** está implementado. | 🟡 |
@@ -253,7 +253,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    subgraph Services[Java 21 · Spring Boot 4]
+    subgraph Services[Java 25 · Spring Boot 4]
         TS[transaction-service :8080<br/>REST · regras · orquestra parceiro]
         PM[external-partner-mock :8081<br/>contas em memória · latência/falha configurável]
     end
@@ -408,10 +408,11 @@ flowchart LR
 - **Decisão:** retry em `HttpExternalPartnerClient` com `max-attempts=3`, `backoff-ms=200` aplicado de forma crescente (`200ms`, `400ms`); apenas falhas de comunicação (`RestClientException`) disparam retry — falha de negócio não.
 - **Consequências:** transação sobrevive a quedas curtas; em indisponibilidade prolongada cada tentativa bloqueia até os timeouts configurados (1s conexão / 2s leitura) com backoff 200ms/400ms — a duração real depende do tipo de falha (conexão recusada falha rápido; leitura travada acumula vários segundos); alerta `PartnerCallFailuresHigh` detecta indisponibilidade prolongada.
 
-### ADR-007 — Java 21 + Spring Boot 4
+### ADR-007 — Java 21 → Java 25 + Spring Boot 4
 
 - **Contexto:** base moderna para o exemplo; Spring Boot 4 modularizou dependências antes empacotadas no `spring-boot-starter-web`.
-- **Decisão:** Java 21 (LTS), Spring Boot 4, Maven Wrapper; Jackson 3 (`tools.jackson.*`) e `@MockitoBean`/`spring-boot-webmvc-test` nos testes.
+- **Decisão original:** Java 21 (LTS), Spring Boot 4, Maven Wrapper; Jackson 3 (`tools.jackson.*`) e `@MockitoBean`/`spring-boot-webmvc-test` nos testes.
+- **Atualização (nov/2026):** runtime e toolchain avançaram para Java 25 (LTS); os dois serviços, imagens Docker, CI e pré-requisitos estão alinhados.
 - **Consequências:** notes de compatibilidade registradas em [architecture.md](./architecture.md#notas-de-compatibilidade-spring-boot-4); curva de aprendizado para quem vem do Boot 3.
 
 ### ADR-008+

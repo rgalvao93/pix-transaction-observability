@@ -17,7 +17,7 @@ _Architecture Decision Records_ deste repositório.
   - ADR-004 Operação síncrona REST (em vez de fila assíncrona)
   - ADR-005 HTTP 200 sempre + status de negócio no corpo
   - ADR-006 Retry com backoff crescente no cliente HTTP
-  - ADR-007 Java 21 + Spring Boot 4
+  - ADR-007 Java 25 + Spring Boot 4
 
 A partir do ADR-008, novos registros são arquivados aqui como arquivos individuais.
 
