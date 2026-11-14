@@ -89,7 +89,7 @@ cd transaction-service && ./mvnw spring-boot:run     # terminal 2
 cd observability && docker compose up -d             # terminal 3
 ```
 
-> **Nota**: a sintaxe do `docker-compose.yml` foi validada com `docker compose config`, mas o `docker compose up` em si não foi executado no ambiente onde este projeto foi desenvolvido (sem daemon Docker disponível). Caso encontre algum ajuste necessário ao rodar localmente, é esperado — a stack não teve um "primeiro boot" real verificado.
+> **Nota**: primeiro boot real validado em 2026-11-14 — `docker compose up` completo, `promtool check config/rules` e `amtool check-config` aprovando, targets `up`, datasource e dashboard do Grafana provisionados e um alerta de teste propagando do Prometheus até o AlertManager (rota `default`, sem canal de notificação real).
 
 ## Rastreamento (Traces)
 

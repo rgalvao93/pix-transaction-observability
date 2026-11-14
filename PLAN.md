@@ -25,7 +25,7 @@ Plano geral do projeto, organizado em fases. Cada fase tem objetivo, entregávei
 
 Cadência de itens de baixo acoplamento que fecham pontas soltas do MVP antes de acrescentar features novas.
 
-- [ ] **Verificação real da stack de observabilidade** — o `docker compose up` completo nunca foi executado (só `docker compose config` foi validado). Validar primeiro boot de Prometheus/Grafana/AlertManager e ajustar o que for necessário.
+- [x] **Verificação real da stack de observabilidade** — `docker compose up` completo executado e validado (2026-11-14): Prometheus/Grafana/AlertManager sobem limpos, `promtool`/`amtool` aprovam config e as 4 regras, targets `up`, Grafana provisionado consultando o Prometheus e alerta de teste propagou até o AlertManager.
 - [ ] **Canal de notificação no AlertManager** — hoje o receiver é `default` sem canal real (demo). Configurar webhook ou e-mail (demonstração) e validar alertas de ponta a ponta.
 - [x] **Persistência real** — PostgreSQL/JPA/Flyway para transações, limite diário e contas do mock; idempotência e reservas diárias persistem entre reinícios.
 - [ ] **Provedor de identidade real** — `/auth/token` emite JWT sem validar credenciais (conveniência de dev). Integrar com IdP/OAuth2 e remover o endpoint de teste.
@@ -54,7 +54,7 @@ Cadência de itens de baixo acoplamento que fecham pontas soltas do MVP antes de
 
 - Branch `main` sincronizada com `origin/main`.
 - `transaction-service` (8080) e `external-partner-mock` (8081) implementados e testados — ver [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) para executar localmente.
-- Stack de observabilidade pronta em `observability/` (pendente primeiro boot real).
+- Stack de observabilidade validada com `docker compose up` completo (boot real + propagação de alerta até o AlertManager).
 - Documentação completa em [docs/](docs/): `architecture.md`, `API.md`, `OBSERVABILITY.md`, `DEVELOPMENT.md`.
 
 ## Riscos e Observações

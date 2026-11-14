@@ -503,7 +503,7 @@ GAPs ainda sem fase dedicada (GAP-2 persistência, GAP-3 auditoria, GAP-4 IdP, G
 | Efeito duplicado em requisições concorrentes com o mesmo `transactionId` | R-2 | Média | Alto | [GAP-2]: reservar idempotência no banco antes de chamar o parceiro; persistência já evita perda do resultado em restart |
 | Segredo JWT demo usado em produção | R-3 | Média | Alto | [GAP-4]/[GAP-5]: IdP real + secret manager com rotação; alerta de config |
 | Retry bloqueante (timeouts × tentativas) degrada o p95 quando o parceiro está baixo | R-4 | Média | Médio | [GAP-6]: fila/async; ou reduzir `partner.retry.max-attempts`; alerta `PartnerCallFailuresHigh` |
-| Stack de observabilidade sem **boot real** validado (só `docker compose config`) | R-5 | Média | Médio | Executar `docker compose up` completo em ambiente com daemon Docker e validar targets no Prometheus |
+| Stack de observabilidade depende de Docker local e foi validada em um único ambiente | R-5 | Baixa | Médio | Boot completo + propagação de alerta validados em 2026-11-14; repetir a validação ao alterar `observability/` |
 | Documentação desatualizada vs. código (ex.: `/actuator/prometheus` marcado como planejado) | R-6 | Média | Baixo | Revisão de docs no mesmo fluxo de mudanças; correção aplicada nesta entrega |
 
 ---
