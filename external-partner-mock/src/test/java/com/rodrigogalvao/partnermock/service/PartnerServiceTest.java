@@ -88,4 +88,20 @@ class PartnerServiceTest {
         assertThat(result.success()).isFalse();
         assertThat(result.partnerReference()).isNull();
     }
+
+    @Test
+    void simulateLatencySleepsWithinConfiguredRange() {
+        PartnerAccount account = account("acc-123", "1000.00");
+        stubAccountTransfer(account);
+        // min=max=1ms: exercises the random delay computation and Thread.sleep path
+        PartnerService partnerService = new PartnerService(accountRepository, 1, 1, 0.0, new Random());
+
+        long startedAt = System.currentTimeMillis();
+        PartnerService.TransferResult result =
+                partnerService.transfer("acc-123", BigDecimal.valueOf(100), TransactionType.CASH_IN);
+        long elapsed = System.currentTimeMillis() - startedAt;
+
+        assertThat(result.success()).isTrue();
+        assertThat(elapsed).isGreaterThanOrEqualTo(1);
+    }
 }

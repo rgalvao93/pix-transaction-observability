@@ -1,6 +1,7 @@
 package com.rodrigogalvao.transaction.partner;
 
 import com.rodrigogalvao.transaction.security.JwtTokenProvider;
+import com.rodrigogalvao.transaction.model.TransactionType;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -39,6 +40,25 @@ class HttpExternalPartnerClientTest {
         ExternalPartnerClient.VerifyBalanceResult result = client.verifyBalance("acc-1");
 
         assertThat(result.available()).isTrue();
+        server.verify();
+    }
+
+    @Test
+    void retriesTransferAndSucceedsOnLaterAttempt() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        HttpExternalPartnerClient client = buildClient(builder, 3);
+
+        server.expect(requestTo(BASE_URL + "/partner/transfer")).andRespond(withServerError());
+        server.expect(requestTo(BASE_URL + "/partner/transfer"))
+                .andRespond(withSuccess("{\"success\":true,\"partnerReference\":\"ref-9\"}",
+                        MediaType.APPLICATION_JSON));
+
+        ExternalPartnerClient.TransferResult result =
+                client.transfer("acc-1", java.math.BigDecimal.valueOf(100), TransactionType.CASH_OUT);
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.partnerReference()).isEqualTo("ref-9");
         server.verify();
     }
 

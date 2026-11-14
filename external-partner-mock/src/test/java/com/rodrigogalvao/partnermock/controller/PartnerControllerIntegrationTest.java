@@ -72,4 +72,18 @@ class PartnerControllerIntegrationTest {
                         .content("{\"accountId\":\"acc-123\",\"amount\":50,\"type\":\"FOO\"}"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void transferReturns400WithFieldErrorsWhenRequiredFieldsAreMissing() throws Exception {
+        mockMvc.perform(post("/partner/transfer")
+                        .header("Authorization", "Bearer " + validToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors.length()").value(3))
+                .andExpect(jsonPath("$.errors[?(@ == 'accountId is required')]").exists())
+                .andExpect(jsonPath("$.errors[?(@ == 'amount is required')]").exists())
+                .andExpect(jsonPath("$.errors[?(@ == 'type is required and must be CASH_IN or CASH_OUT')]").exists());
+    }
 }

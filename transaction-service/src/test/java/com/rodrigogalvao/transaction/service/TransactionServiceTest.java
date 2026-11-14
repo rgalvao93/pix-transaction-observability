@@ -82,6 +82,22 @@ class TransactionServiceTest {
     }
 
     @Test
+    void cashInFailsWhenPartnerDeclinesTransfer() {
+        when(transactionRepository.findByTransactionId("txn-1")).thenReturn(Optional.empty());
+        when(partnerClient.verifyBalance("acc-1"))
+                .thenReturn(new ExternalPartnerClient.VerifyBalanceResult("acc-1", BigDecimal.ZERO, true));
+        when(partnerClient.transfer(eq("acc-1"), eq(BigDecimal.valueOf(100)), eq(TransactionType.CASH_IN)))
+                .thenReturn(new ExternalPartnerClient.TransferResult(false, null));
+
+        TransactionResponse response = transactionService.process(request(TransactionType.CASH_IN, BigDecimal.valueOf(100)));
+
+        assertThat(response.getStatus()).isEqualTo(TransactionStatus.FAILED.name());
+        assertThat(response.getReason()).isEqualTo("falha na transferência");
+        verify(transactionRepository).save(eq("txn-1"), eq(TransactionType.CASH_IN), eq("acc-1"),
+                eq(BigDecimal.valueOf(100)), any());
+    }
+
+    @Test
     void cashOutSucceedsWhenBalanceAndLimitAreOk() {
         when(transactionRepository.findByTransactionId("txn-1")).thenReturn(Optional.empty());
         when(partnerClient.verifyBalance("acc-1"))
@@ -120,6 +136,23 @@ class TransactionServiceTest {
         assertThat(response.getStatus()).isEqualTo(TransactionStatus.FAILED.name());
         assertThat(response.getReason()).isEqualTo("limite diário excedido");
         verify(partnerClient, never()).transfer(anyString(), any(BigDecimal.class), any(TransactionType.class));
+    }
+
+    @Test
+    void cashOutFailsWhenPartnerDeclinesTransfer() {
+        when(transactionRepository.findByTransactionId("txn-1")).thenReturn(Optional.empty());
+        when(partnerClient.verifyBalance("acc-1"))
+                .thenReturn(new ExternalPartnerClient.VerifyBalanceResult("acc-1", BigDecimal.valueOf(5000), true));
+        when(dailyLimitTracker.tryReserve("acc-1", BigDecimal.valueOf(100))).thenReturn(true);
+        when(partnerClient.transfer(eq("acc-1"), eq(BigDecimal.valueOf(100)), eq(TransactionType.CASH_OUT)))
+                .thenReturn(new ExternalPartnerClient.TransferResult(false, null));
+
+        TransactionResponse response = transactionService.process(request(TransactionType.CASH_OUT, BigDecimal.valueOf(100)));
+
+        assertThat(response.getStatus()).isEqualTo(TransactionStatus.FAILED.name());
+        assertThat(response.getReason()).isEqualTo("falha na transferência");
+        verify(transactionRepository).save(eq("txn-1"), eq(TransactionType.CASH_OUT), eq("acc-1"),
+                eq(BigDecimal.valueOf(100)), any());
     }
 
     @Test
