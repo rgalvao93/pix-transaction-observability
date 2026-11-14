@@ -4,7 +4,7 @@
 
 - Java 25+
 - Maven Wrapper incluído (não precisa instalar Maven manualmente)
-- Docker + Docker Compose *(necessário apenas para subir a stack de observabilidade — Prometheus/Grafana/AlertManager)*
+- Docker + Docker Compose *(PostgreSQL local e stack de observabilidade)*
 
 ## Estrutura de Pastas
 
@@ -36,7 +36,8 @@ pix-transaction-observability/
 │       │   ├── dto/               # Objetos de transporte HTTP (request/response/erro)
 │       │   ├── model/             # Domínio (TransactionType, TransactionStatus)
 │       │   ├── partner/           # Cliente HTTP do parceiro externo (retry/timeout)
-│       │   ├── repository/        # Repositórios em memória (idempotência, limite diário)
+│       │   ├── repository/        # Repositórios JPA (transações, idempotência, limite diário)
+│       │   ├── entity/            # Entidades persistidas
 │       │   ├── security/          # JWT (provider, filtro, configuração)
 │       │   └── exception/         # Tratamento global de erros (400/401)
 │       └── test/                  # Testes unitários e de integração
@@ -45,7 +46,8 @@ pix-transaction-observability/
 │   └── src/main/java/com/rodrigogalvao/partnermock/
 │       ├── PartnerMockApplication.java
 │       ├── controller/             # PartnerController (verify-balance, transfer)
-│       ├── service/                # PartnerService (contas em memória, latência/falha)
+│       ├── service/                # PartnerService (contas persistidas, latência/falha)
+│       ├── entity/, repository/    # Contas JPA
 │       ├── dto/, model/, security/, exception/  # mesmos papéis do transaction-service
 └── observability/                 # Stack Prometheus + Grafana + AlertManager (Docker Compose)
     ├── docker-compose.yml
@@ -56,7 +58,16 @@ pix-transaction-observability/
 
 ## Rodando os dois serviços localmente
 
-Suba primeiro o `external-partner-mock` (porta 8081), depois o `transaction-service` (porta 8080) — ambos precisam do **mesmo** `SECURITY_JWT_SECRET` para que os tokens emitidos por um sejam aceitos pelo outro (por padrão os dois usam o mesmo valor de demonstração em `application.properties`, então basta rodar sem sobrescrever nada):
+Suba o PostgreSQL pelo Compose; a mesma instância serve os dois serviços e cada módulo aplica suas migrations Flyway no startup:
+
+```bash
+cd observability
+docker compose up -d postgres
+```
+
+O banco `pix_observability` e o usuário `pix`/`pix_local_dev` são valores locais de desenvolvimento. Use `DATABASE_URL`, `DATABASE_USERNAME` e `DATABASE_PASSWORD` para apontar para outra instância. Os testes usam H2 isolado e não precisam do PostgreSQL.
+
+Em seguida, suba o `external-partner-mock` (porta 8081), depois o `transaction-service` (porta 8080) — ambos precisam do **mesmo** `SECURITY_JWT_SECRET` para que os tokens emitidos por um sejam aceitos pelo outro (por padrão os dois usam o mesmo valor de demonstração em `application.properties`, então basta rodar sem sobrescrever nada):
 
 ```bash
 cd external-partner-mock
@@ -113,7 +124,7 @@ docker compose up -d
 
 Gere tráfego de teste (sucesso, saldo insuficiente, falha simulada) para ver os painéis reagirem — ver exemplos de `curl` em [Testando manualmente](#testando-manualmente) acima. Para forçar falhas simuladas do parceiro, suba o `external-partner-mock` com `partner.mock.failure-rate` mais alto, ex: `PARTNER_MOCK_FAILURE_RATE=0.5 ./mvnw spring-boot:run` (ou ajuste a propriedade diretamente).
 
-> A sintaxe do `docker-compose.yml` foi validada com `docker compose config`; o `docker compose up` completo (baixar as imagens e subir os três containers) não foi executado no ambiente de desenvolvimento original, que não tinha o daemon Docker disponível. Ver detalhes em [`OBSERVABILITY.md`](./OBSERVABILITY.md).
+> O serviço `postgres` é independente da stack de observabilidade e pode ser iniciado sozinho com `docker compose up -d postgres`.
 
 ## Convenções de Código
 

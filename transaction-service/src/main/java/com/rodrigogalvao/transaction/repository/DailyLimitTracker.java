@@ -1,51 +1,55 @@
 package com.rodrigogalvao.transaction.repository;
 
+import com.rodrigogalvao.transaction.entity.DailyLimit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 
-/**
- * Tracks cumulative CASH_OUT amount per account per day, in memory.
- * Resets naturally at midnight since the map key includes the current date.
- */
 @Component
 public class DailyLimitTracker {
 
     private final BigDecimal dailyLimit;
-    private final Map<String, BigDecimal> totalsByAccountAndDate = new ConcurrentHashMap<>();
+    private final JpaDailyLimitRepository repository;
 
-    public DailyLimitTracker(@Value("${transaction.cash-out.daily-limit:5000.00}") BigDecimal dailyLimit) {
+    public DailyLimitTracker(@Value("${transaction.cash-out.daily-limit:5000.00}") BigDecimal dailyLimit,
+                             JpaDailyLimitRepository repository) {
         this.dailyLimit = dailyLimit;
+        this.repository = repository;
     }
 
-    /**
-     * Atomically checks whether adding {@code amount} to today's total for {@code accountId}
-     * stays within the daily limit, and reserves it if so.
-     */
+    @Transactional
     public boolean tryReserve(String accountId, BigDecimal amount) {
-        String key = key(accountId);
-        boolean[] allowed = {true};
-        totalsByAccountAndDate.compute(key, (k, currentTotal) -> {
-            BigDecimal base = currentTotal == null ? BigDecimal.ZERO : currentTotal;
-            BigDecimal updated = base.add(amount);
-            if (updated.compareTo(dailyLimit) > 0) {
-                allowed[0] = false;
-                return base;
+        LocalDate today = LocalDate.now();
+        Optional<DailyLimit> current = repository.findByAccountIdAndLimitDateForUpdate(accountId, today);
+        if (current.isEmpty()) {
+            repository.lockInitialReservation();
+            current = repository.findByAccountIdAndLimitDateForUpdate(accountId, today);
+        }
+
+        if (current.isPresent()) {
+            DailyLimit dailyLimitForAccount = current.get();
+            BigDecimal updatedTotal = dailyLimitForAccount.getTotalAmount().add(amount);
+            if (updatedTotal.compareTo(dailyLimit) > 0) {
+                return false;
             }
-            return updated;
-        });
-        return allowed[0];
+            dailyLimitForAccount.setTotalAmount(updatedTotal);
+            repository.save(dailyLimitForAccount);
+            return true;
+        }
+
+        if (amount.compareTo(dailyLimit) > 0) {
+            return false;
+        }
+        repository.save(new DailyLimit(accountId, today, amount));
+        return true;
     }
 
     public BigDecimal getDailyLimit() {
         return dailyLimit;
     }
 
-    private String key(String accountId) {
-        return accountId + ":" + LocalDate.now();
-    }
 }

@@ -14,6 +14,11 @@ variáveis de ambiente:
 | `PORT` | Porta injetada pelo Cloud Run (geralmente 8080). O Dockerfile a respeita automaticamente. | 8080 (injetado) |
 | `SECURITY_JWT_SECRET` | Segredo JWT compartilhado entre os dois serviços. **Igual em ambos.** | `demo-only-jwt-secret-change-me-in-production-1234567890` |
 | `PARTNER_BASE_URL` | URL do `external-partner-mock` apontada pelo `transaction-service`. Ex: `https://mock-xxx-uc.a.run.app` | `http://localhost:8081` |
+| `DATABASE_URL` | JDBC URL de uma instância PostgreSQL acessível pelos dois serviços, por exemplo `jdbc:postgresql://HOST:5432/pix_observability` | `jdbc:postgresql://localhost:5432/pix_observability` |
+| `DATABASE_USERNAME` | Usuário do banco PostgreSQL | `pix` (desenvolvimento local) |
+| `DATABASE_PASSWORD` | Senha do banco PostgreSQL; em produção, forneça por Secret Manager | `pix_local_dev` (desenvolvimento local) |
+
+O deploy de produção precisa de PostgreSQL durável e conectividade de rede a partir de ambos os serviços Cloud Run. Configure a mesma `DATABASE_URL` e credenciais nos dois serviços. As migrations Flyway são aplicadas no startup; `spring.jpa.hibernate.ddl-auto=validate` valida o schema. Os valores padrão de banco são apenas para desenvolvimento local.
 
 ## Ordem de deploy
 

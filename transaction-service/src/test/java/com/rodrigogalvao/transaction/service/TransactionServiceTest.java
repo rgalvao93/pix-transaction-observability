@@ -64,7 +64,8 @@ class TransactionServiceTest {
         TransactionResponse response = transactionService.process(request(TransactionType.CASH_IN, BigDecimal.valueOf(100)));
 
         assertThat(response.getStatus()).isEqualTo(TransactionStatus.PROCESSED.name());
-        verify(transactionRepository).save(eq("txn-1"), any());
+        verify(transactionRepository).save(eq("txn-1"), eq(TransactionType.CASH_IN), eq("acc-1"),
+                eq(BigDecimal.valueOf(100)), any());
     }
 
     @Test

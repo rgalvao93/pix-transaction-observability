@@ -117,7 +117,7 @@ Ver detalhes em [`OBSERVABILITY.md`](./OBSERVABILITY.md).
 
 Assim como o `transaction-service`, todos os endpoints sob `/partner/**` exigem `Authorization: Bearer <jwt>`. O token é validado com o **mesmo segredo** (`security.jwt.secret` / env var `SECURITY_JWT_SECRET`) usado pelo `transaction-service` para assiná-lo — o `HttpExternalPartnerClient` gera um token novo a cada chamada.
 
-Duas contas de demonstração já vêm pré-carregadas em memória: `acc-123` (saldo 1000.00) e `acc-789` (saldo 500.00). Qualquer outra `accountId` é tratada como desconhecida (`available: false`).
+Duas contas de demonstração são criadas pela migration inicial: `acc-123` (saldo 1000.00) e `acc-789` (saldo 500.00). Os saldos ficam persistidos; qualquer outra `accountId` é tratada como desconhecida (`available: false`).
 
 ### POST /partner/verify-balance
 
@@ -139,6 +139,6 @@ Duas contas de demonstração já vêm pré-carregadas em memória: `acc-123` (s
 { "success": true, "partnerReference": "psp-ref-123456789" }
 ```
 
-`transfer` aplica o delta (`CASH_IN` soma, `CASH_OUT` subtrai) ao saldo em memória quando `success: true`. Ambos os endpoints simulam latência artificial e uma taxa de falha configuráveis (`partner.mock.latency.min-ms`/`max-ms`, `partner.mock.failure-rate` — ver [`architecture.md`](./architecture.md)); uma falha simulada retorna `success: false` com HTTP 200, não um erro HTTP.
+`transfer` aplica o delta (`CASH_IN` soma, `CASH_OUT` subtrai) ao saldo persistido quando `success: true`. Ambos os endpoints simulam latência artificial e uma taxa de falha configuráveis (`partner.mock.latency.min-ms`/`max-ms`, `partner.mock.failure-rate` — ver [`architecture.md`](./architecture.md)); uma falha simulada retorna `success: false` com HTTP 200, não um erro HTTP.
 
 > Uma falha simulada (`success: false` com HTTP 200) **não dispara retry** no `transaction-service` — o retry só ocorre em erro de transporte/HTTP (`RestClientException`: timeout, conexão recusada). A resposta `success: false` é tratada como falha de negócio e vira `FAILED` com motivo `"falha na transferência"`.

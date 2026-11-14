@@ -41,7 +41,6 @@ A proposta do projeto é construir o serviço com **observabilidade desde o Dia 
 
 **Fora do escopo (MVP):**
 
-- Persistência real (idempotência, limite diário e saldos são em memória);
 - Tracing distribuído (OpenTelemetry) — gap em aberto (Fase 6);
 - Autenticação real com provedor de identidade (OAuth2/OIDC);
 - Fila/mensageria e consistência eventual entre serviços;
@@ -114,7 +113,7 @@ Legenda de status de implementação: ✅ implementado · 🟡 parcialmente impl
 | **RNF-07** | Testabilidade | Testes unitários e de integração por serviço cobrindo fluxos principais e falhas. | ✅ |
 | **RNF-08** | Portabilidade | Execução local com Maven Wrapper (sem instalar Maven); stack de observabilidade via Docker Compose; configuração por variáveis de ambiente. | ✅ |
 | **RNF-09** | Rastreabilidade | IDs de transação presentes nos logs para correlação manual. Tracing distribuído (correlação automática entre serviços) **não** está implementado. | 🟡 |
-| **RNF-10** | Escalabilidade | Serviços desenhados `stateless`; porém o estado em memória (idempotência, limite diário, saldos) impede escala horizontal com consistência. | 🟡 |
+| **RNF-10** | Escalabilidade | Estado de transações, limites e saldos compartilhado no PostgreSQL; idempotência concorrente ainda requer coordenação antes da chamada ao parceiro. | 🟡 |
 
 ---
 
@@ -255,14 +254,17 @@ flowchart LR
 flowchart LR
     subgraph Services[Java 25 · Spring Boot 4]
         TS[transaction-service :8080<br/>REST · regras · orquestra parceiro]
-        PM[external-partner-mock :8081<br/>contas em memória · latência/falha configurável]
+        PM[external-partner-mock :8081<br/>contas persistidas · latência/falha configurável]
     end
     subgraph Obs[Observability — Docker Compose]
         PR[Prometheus :9090]
         GR[Grafana :3000]
         AM[AlertManager :9093]
     end
+    DB[(PostgreSQL<br/>transações · limites · contas)]
     TS -->|HTTP| PM
+    TS --> DB
+    PM --> DB
     TS -->|scrape /actuator/prometheus| PR
     PM -->|scrape /actuator/prometheus| PR
     PR -->|alertas| AM
@@ -280,8 +282,8 @@ flowchart LR
     SEC[JwtAuthenticationFilter<br/>valida Bearer JWT]
     TServ[TransactionService<br/>orquestra cash-in/cash-out]
     CL[HttpExternalPartnerClient<br/>Retry + timeout + métricas]
-    CRUD[(TransactionRepository<br/>cache in-memory de idempotência)]
-    DL[DailyLimitTracker<br/>limite cash-out in-memory]
+    CRUD[(TransactionRepository<br/>transações / idempotência em PostgreSQL)]
+    DL[DailyLimitTracker<br/>limite cash-out persistido]
     MET[MeterRegistry<br/>Micrometer]
     LOG[SLF4J + LogstashEncoder<br/>logs JSON]
     HTTP --> SEC
@@ -290,6 +292,8 @@ flowchart LR
     TC --> TServ
     TServ --> CRUD
     TServ --> DL
+    CRUD --> DB[(PostgreSQL)]
+    DL --> DB
     TServ --> CL
     TServ --> MET
     TServ --> LOG
@@ -302,23 +306,23 @@ flowchart LR
 
 1. Requisição autenticada chega ao `TransactionController` (`TransactionController.java`).
 2. Payload é validado com `jakarta.validation`; inválido → `GlobalExceptionHandler` retorna **400** com lista de erros.
-3. `TransactionService.process()` verifica idempotência no `TransactionRepository` (cache em memória); se já processado, retorna resposta cacheada.
+3. `TransactionService.process()` verifica idempotência no `TransactionRepository`; se já processado, retorna a resposta persistida.
 4. Conforme o `type`, executa `processCashIn` ou `processCashOut`, sempre através do `HttpExternalPartnerClient` (RestClient), que:
    - gera um novo JWT a cada chamada (`clientId = "transaction-service"`);
    - aplica timeouts de conexão/leitura configuráveis;
    - repete a chamada com **backoff crescente** (`backoff-ms × attempt`) até `max-attempts`;
    - mede a latência por operação/resultado e incrementa `external_partner_calls_failed_total` ao esgotar.
-5. Resultado (`PROCESSED`/`FAILED`/`ERROR`) é salvo no cache, métricas `transaction_total` e `transaction_processing_duration_seconds` são emitidas, e o log estruturado de conclusão é gravado.
+5. Resultado (`PROCESSED`/`FAILED`/`ERROR`) é salvo no PostgreSQL, métricas `transaction_total` e `transaction_processing_duration_seconds` são emitidas, e o log estruturado de conclusão é gravado.
 6. Resposta **sempre HTTP 200** com o status de negócio no corpo, exceto 400 (validação) e 401 (autenticação).
 
 ### 6.5 Modelo de Estado
 
 | Estado | Onde vive | Fonte de verdade | Observação |
 | --- | --- | --- | --- |
-| Resultado de transação (idempotência) | `TransactionRepository` — `ConcurrentHashMap` in-memory | `transaction-service` | Perdido em restart; impede multi-instância |
-| Total cash-out diário por conta | `DailyLimitTracker` — `ConcurrentHashMap` in-memory (`conta:data`) | `transaction-service` | Reset natural à meia-noite; perdido em restart |
-| Saldo das contas | `PartnerService` in-memory (`acc-123`=1000.00, `acc-789`=500.00) | `external-partner-mock` | O parceiro (simulado) é a fonte de verdade do saldo |
-| Pedidos de transação → status | Não persistido — apenas logs e métricas | — | Sem trilha de auditoria persistente (gap) |
+| Resultado de transação (idempotência) | PostgreSQL (`transactions`, chave `transactionId`) | `transaction-service` | Persiste entre reinícios; requisições simultâneas com o mesmo ID ainda precisam de reserva atômica |
+| Total cash-out diário por conta | PostgreSQL (`daily_limits`, chave conta/data) | `transaction-service` | Bloqueio de linha coordena reservas; novo limite diário começa com zero |
+| Saldo das contas | PostgreSQL (`partner_accounts`) | `external-partner-mock` | O parceiro (simulado) é a fonte de verdade do saldo |
+| Pedido de transação → status | PostgreSQL (`transactions`) | `transaction-service` | Histórico básico persistido; auditoria completa ainda requer referência do parceiro e trilha de eventos |
 
 ---
 
@@ -379,6 +383,7 @@ flowchart LR
 
 ### ADR-002 — Estado em memória no MVP (sem persistência)
 
+- **Status:** supersedida pelo [ADR-009](./adr/0009-postgres-persistence.md).
 - **Contexto:** MVP foca em demonstrar o comportamento transacional e a observabilidade, não a durabilidade.
 - **Alternativas:** Postgres/Redis para idempotência e limite diário.
 - **Decisão:** `TransactionRepository` e `DailyLimitTracker` mantêm estado em memória (`ConcurrentHashMap`); saldos vivem no mock do parceiro.
@@ -430,8 +435,8 @@ ADR-008 em diante são arquivos individuais em [`docs/adr/`](./adr/README.md) (e
 | RF-01 | Cash-in | ✅ `TransactionService.processCashIn` |
 | RF-02 | Cash-out | ✅ `TransactionService.processCashOut` |
 | RF-03 | Validação de payload (400) | ✅ `jakarta.validation` + `GlobalExceptionHandler` |
-| RF-04 | Idempotência por `transactionId` | ✅ `TransactionRepository` (cache in-memory) |
-| RF-05 | Limite diário de cash-out | ✅ `DailyLimitTracker` (in-memory) |
+| RF-04 | Idempotência por `transactionId` | ✅ `TransactionRepository` (PostgreSQL; requisições simultâneas ainda exigem reserva atômica) |
+| RF-05 | Limite diário de cash-out | ✅ `DailyLimitTracker` (PostgreSQL, com bloqueio de linha) |
 | RF-06 | Consulta de saldo | ✅ `verify-balance` via `HttpExternalPartnerClient` |
 | RF-07 | Transferência | ✅ `transfer` via `HttpExternalPartnerClient` |
 | RF-08 | Retry com backoff | ✅ `executeWithRetry` (3 tentativas, backoff 200ms crescente) |
@@ -457,7 +462,7 @@ ADR-008 em diante são arquivos individuais em [`docs/adr/`](./adr/README.md) (e
 | RNF-07 | Testabilidade | ✅ unit + integração nos dois serviços |
 | RNF-08 | Portabilidade | ✅ Maven Wrapper + Docker Compose + env vars |
 | RNF-09 | Rastreabilidade | 🟡 IDs nos logs; sem tracing distribuído |
-| RNF-10 | Escalabilidade | 🟡 services stateless, mas estado em memória limita |
+| RNF-10 | Escalabilidade | 🟡 Estado compartilhado no PostgreSQL; idempotência concorrente ainda requer coordenação antes da chamada ao parceiro |
 
 ---
 
@@ -468,8 +473,8 @@ ADR-008 em diante são arquivos individuais em [`docs/adr/`](./adr/README.md) (e
 | Gap | ID | Prioridade | Esforço | Descrição |
 | --- | --- | --- | --- | --- |
 | **GAP-1** | Tracing distribuído | Alta | M | OpenTelemetry + propagate `traceId` entre `transaction-service` e o parceiro; coleta em Tempo ou Jaeger para correlação automática fim-a-fim (supre RNF-09 por completo). |
-| **GAP-2** | Persistência real | Alta | M | Postgres (ou Redis) para idempotência e limite diário — sobrevive a restart e habilita multi-instância (supre RNF-10). |
-| **GAP-3** | Auditoria / histórico | Alta | M | Persistir pedidos e status como trilha de auditoria (hoje só logs em stdout) — suporta conformidade em ambiente regulamentado. |
+| **GAP-2** | Idempotência concorrente | Alta | M | Persistência em PostgreSQL foi implementada pelo ADR-009; falta reservar atomicamente `transactionId` antes da chamada ao parceiro para impedir efeitos duplicados em requisições simultâneas ou após crash intermediário. |
+| **GAP-3** | Auditoria completa | Alta | M | Há histórico básico persistido de pedido e status; falta trilha imutável de eventos e persistência da referência do parceiro para suportar auditoria completa em ambiente regulamentado. |
 | **GAP-4** | IdP real (OAuth2/OIDC) | Média | M | Substituir `POST /auth/token` demo por fluxo de autorização real; JWT emitido/validado pelo IdP. |
 | **GAP-5** | Gestão de segredos | Alta | M | Segredo JWT via secret manager (Vault/cloud); rotação; nunca *default* de demonstração em produção. |
 | **GAP-6** | Filas/eventos e consistência | Média | A | Outbox + fila (Kafka/native) para desacoplar o processo da latência do parceiro; consistência eventual com reconciliação. |
@@ -495,7 +500,7 @@ GAPs ainda sem fase dedicada (GAP-2 persistência, GAP-3 auditoria, GAP-4 IdP, G
 | Risco | ID | Probabilidade | Impacto | Mitigação |
 | --- | --- | --- | --- | --- |
 | Reserva de limite diário não revertida em falha de transferência (cash-out) | R-1 | Alta | Médio | [GAP-8]: rollback de reserva; teste de regressão (ver nota da RN-05) |
-| Perda de estado em restart (idempotência, limites, saldos em memória) | R-2 | Alta | Alto | [GAP-2]/[GAP-3]: persistência; até lá, documentar que restart perde trilha |
+| Efeito duplicado em requisições concorrentes com o mesmo `transactionId` | R-2 | Média | Alto | [GAP-2]: reservar idempotência no banco antes de chamar o parceiro; persistência já evita perda do resultado em restart |
 | Segredo JWT demo usado em produção | R-3 | Média | Alto | [GAP-4]/[GAP-5]: IdP real + secret manager com rotação; alerta de config |
 | Retry bloqueante (timeouts × tentativas) degrada o p95 quando o parceiro está baixo | R-4 | Média | Médio | [GAP-6]: fila/async; ou reduzir `partner.retry.max-attempts`; alerta `PartnerCallFailuresHigh` |
 | Stack de observabilidade sem **boot real** validado (só `docker compose config`) | R-5 | Média | Médio | Executar `docker compose up` completo em ambiente com daemon Docker e validar targets no Prometheus |

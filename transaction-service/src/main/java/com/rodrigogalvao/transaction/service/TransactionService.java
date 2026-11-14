@@ -59,7 +59,8 @@ public class TransactionService {
                     "falha de comunicação com o parceiro externo");
         }
 
-        transactionRepository.save(request.getTransactionId(), response);
+        transactionRepository.save(request.getTransactionId(), request.getType(), request.getAccountId(),
+                request.getAmount(), response);
         recordMetrics(sample, request, response);
         log.info("Transaction {} processed as {} in {}ms", request.getTransactionId(), response.getStatus(),
                 System.currentTimeMillis() - startedAt);

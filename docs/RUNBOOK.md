@@ -91,10 +91,10 @@ TRANSACTION_CASH_OUT_DAILY_LIMIT=100 ./mvnw spring-boot:run
 | --- | --- | --- |
 | `ERROR` — "falha de comunicação com o parceiro externo" | mock fora do ar ou timeout mesmo após retries | `up{job="external-partner-mock"}`; `external_partner_calls_failed_total`; logs do `HttpExternalPartnerClient` |
 | `FAILED` — "falha na transferência" | taxa de falha simulada alta (`partner.mock.failure-rate`) ou recusa de negócio | painel "Falhas de chamada ao parceiro"; config do mock |
-| `FAILED` — "saldo insuficiente" sem motivo aparente | saldo em memória do mock zerado por testes anteriores | `verify-balance` manual; restart do mock (recarrega `acc-123`=1000.00, `acc-789`=500.00) |
+| `FAILED` — "saldo insuficiente" sem motivo aparente | saldo persistido do mock foi reduzido por transferências anteriores | `verify-balance` manual; para resetar contas demo em desenvolvimento, recrie o volume PostgreSQL local |
 | p95 de processamento alto | latência simulada do mock elevada ou timeouts no limite | `partner.mock.latency.*`; `histogram_quantile` de `transaction_processing_duration_seconds` |
 | Dashboard sem dados | targets fora do Prometheus ou serviços sem `/actuator/prometheus` | Prometheus → Status → Targets; `curl -s localhost:8080/actuator/prometheus` |
-| Restart "perdeu" idempotência/limite/saldo | estado em memória (`ConcurrentHashMap`) — comportamento esperado do MVP | ver GAP-2/GAP-3 em `system-design.md` (persistência) |
+| Serviço não inicia após configurar banco | PostgreSQL indisponível, credenciais/URL incorretas ou migration falhou | verifique `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, conectividade e logs do Flyway |
 
 Consultas Prometheus úteis:
 
@@ -118,7 +118,7 @@ sum by (operation) (rate(external_partner_calls_failed_total[5m]))
 
 ## 5. Notas operacionais (MVP)
 
-- **Estado em memória**: idempotência e limite diário (transaction-service) e saldos (mock) são perdidos em restart. Cenários consecutivos que gastam saldo/limite podem precisar de restart para resetar.
+- **PostgreSQL**: idempotência, limite diário e saldos sobrevivem a reinícios. Preserve o volume `postgres-data`; apagar esse volume remove permanentemente os dados locais.
 - **Quirk RN-05**: no cash-out, falha na transferência **não reverte** a reserva do limite diário — falhas contam contra o limite (correção planejada em GAP-8).
 - **Falha simulada ≠ retry**: `success: false` do mock não dispara retry; apenas erro de transporte/HTTP. Para exercitar o caminho de retry, pare o mock ou suba a latência acima do timeout de leitura (`partner.read-timeout-ms`=2s).
 - **AlertManager sem canal real**: o receiver `default` é demo e não notifica — configurar webhook/e-mail é item da Fase 5 do [`PLAN.md`](../PLAN.md).

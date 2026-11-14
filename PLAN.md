@@ -27,7 +27,7 @@ Cadência de itens de baixo acoplamento que fecham pontas soltas do MVP antes de
 
 - [ ] **Verificação real da stack de observabilidade** — o `docker compose up` completo nunca foi executado (só `docker compose config` foi validado). Validar primeiro boot de Prometheus/Grafana/AlertManager e ajustar o que for necessário.
 - [ ] **Canal de notificação no AlertManager** — hoje o receiver é `default` sem canal real (demo). Configurar webhook ou e-mail (demonstração) e validar alertas de ponta a ponta.
-- [ ] **Persistência real** — substituir `TransactionRepository` e `DailyLimitTracker` (em memória) por um banco (ex: PostgreSQL), preservando a idempotência e o limite diário.
+- [x] **Persistência real** — PostgreSQL/JPA/Flyway para transações, limite diário e contas do mock; idempotência e reservas diárias persistem entre reinícios.
 - [ ] **Provedor de identidade real** — `/auth/token` emite JWT sem validar credenciais (conveniência de dev). Integrar com IdP/OAuth2 e remover o endpoint de teste.
 - [ ] **Limpeza de código** — subir cobertura de testes (health indicator e casos de borda), adicionar CI (build + testes + verificação de alertas), revisar regras de alerta (`rules.yml`) sob carga.
 
@@ -61,7 +61,7 @@ Cadência de itens de baixo acoplamento que fecham pontas soltas do MVP antes de
 
 - **Spring Boot 4 / Jackson 3**: dependências modulares (ex: `spring-boot-starter-jackson`, `spring-boot-webmvc-test`, `@MockitoBean`). Mudanças de API podem surpreender durante upgrades — ver [docs/architecture.md](docs/architecture.md).
 - **Segredos**: `security.jwt.secret` tem valor padrão de demonstração. Em qualquer ambiente compartilhado, definir via `SECURITY_JWT_SECRET` (mesmo valor nos dois serviços).
-- **Escopo MVP**: saldos e contas vivem no mock, em memória — o `transaction-service` não é fonte de verdade de saldo.
+- **Escopo MVP**: saldos e contas persistem no banco do mock — o `transaction-service` não é fonte de verdade de saldo.
 
 ## Convenções
 

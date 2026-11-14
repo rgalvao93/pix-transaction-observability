@@ -22,17 +22,16 @@ MVP de um **serviço transacional Pix** que processa operações de **cash-in** 
 | **Cash-in** | Operação de crédito (depósito) em conta Pix | `type: CASH_IN` |
 | **Cash-out** | Operação de débito (saque/transferência) de conta Pix | `type: CASH_OUT` |
 | **Transaction-service** | Microsserviço que processa transações e orquestra o parceiro | porta `8080` |
-| **External-partner-mock** | Parceiro simulado com contas em memória, latência e falha configuráveis | porta `8081` |
+| **External-partner-mock** | Parceiro simulado que consulta saldos e executa transferências, com latência e falhas configuráveis | porta `8081` |
 | **Parceiro externo** | PSP ou Banco Central, fonte de verdade do saldo | consultado via `verify-balance`/`transfer` |
 | **PROCESSED** | Transação concluída com sucesso no parceiro | status de negócio |
 | **FAILED** | Falha de negócio (saldo, limite, conta, recusa) — esperada e categorizada | status de negócio |
 | **ERROR** | Falha técnica: comunicação exaurida com o parceiro após retries | status de negócio |
-| **Idempotência** | Reenvios do mesmo `transactionId` não reprocessam nem duplicam efeitos | chaveada por `transactionId` para o cache in-memory |
-| **Limite diário de cash-out** | Total cash-out permitido por conta por dia (default `5000.00`, config `transaction.cash-out.daily-limit`); reserva feita antes de transferir | `DailyLimitTracker` in-memory |
+| **Idempotência** | Reenvios do mesmo `transactionId` retornam o mesmo resultado | `transactionId` identifica a operação |
+| **Limite diário de cash-out** | Total cash-out permitido por conta por dia; reserva feita antes de transferir | acumulado por conta e dia |
 | **Retry com backoff** | Repetição de chamada de comunicação ao parceiro com backoff crescente (200ms · attempt) até `max-attempts` (3) | apenas falhas de comunicação disparam retry |
-| **Readiness / Liveness** | Sinais de saúde do serviço; readiness de `transaction-service` inclui `partnerConnectivity` | `/actuator/health` |
+| **Readiness / Liveness** | Sinais que indicam se o serviço está pronto para tráfego ou em execução | health checks dos serviços |
 | **SLI / SLO** | Indicador / objetivo de nível de serviço | SLIs instrumentados; SLOs formais não definidos (gap) |
-| **Idempotency cache** | `TransactionRepository`, `ConcurrentHashMap` em memória | perdido em restart |
 | **Saldo** | Fonte de verdade: o parceiro, não o serviço | contas demo `acc-123` (1000.00) e `acc-789` (500.00) |
 
 ## Regras de negócio centrais
@@ -44,7 +43,6 @@ MVP de um **serviço transacional Pix** que processa operações de **cash-in** 
 - o serviço **não** é a fonte de verdade do saldo (RN-09).
 - **Quirk conhecido**: no cash-out, falha de transferência **não reverte** a reserva do limite diário — falhas contam contra o limite (RN-05 edge case, GAP-8, risco R-1).
 
-## Decisões de arquitetura
+## Referência
 
-- ADR-001 a ADR-007: registrados em `docs/system-design.md` (§8). A partir do ADR-008, novos ADRs são arquivos individuais em `docs/adr/`.
-- Resumo em uma linha: estado em memória no MVP, JWT demo com segredo compartilhado, operação síncrona REST, HTTP 200 + status de negócio, retry com backoff, Java 25 + Spring Boot 4.
+Requisitos e decisões de arquitetura estão em [`docs/system-design.md`](docs/system-design.md) e [`docs/adr/`](docs/adr/).

@@ -13,6 +13,7 @@ O componente principal é um serviço transacional Pix que lida com operações 
 ## 🚀 Tecnologias
 - **Java 25 (LTS)**
 - **Spring Boot 4**
+- **PostgreSQL + Spring Data JPA + Flyway** — persistência de transações, limites diários e contas do mock
 - **Spring Boot Actuator + Micrometer** (métricas no formato Prometheus)
 - **Spring Security + JWT (jjwt)** — autenticação Bearer nos endpoints de transação
 - **springdoc-openapi** — Swagger UI e contrato **OpenAPI 3.1**
@@ -36,11 +37,20 @@ O componente principal é um serviço transacional Pix que lida com operações 
 ### Pré-requisitos
 - Java 25+
 - Maven Wrapper incluído (não precisa instalar o Maven manualmente)
-- Docker + Docker Compose *(apenas para subir a stack de observabilidade)*
+- Docker + Docker Compose *(para PostgreSQL local e stack de observabilidade)*
 
 ### Executando os serviços
 
-Suba primeiro o mock do parceiro (porta `8081`), depois o `transaction-service` (porta `8080`) — ambos usam o mesmo `SECURITY_JWT_SECRET` por padrão:
+Suba o PostgreSQL primeiro. O Compose cria o banco `pix_observability`, que os dois serviços usam com tabelas independentes; as migrations Flyway criam as tabelas e as contas demo:
+
+```bash
+cd observability
+docker compose up -d postgres
+```
+
+As credenciais padrão (`pix`/`pix_local_dev`) são apenas para desenvolvimento local. Podem ser substituídas por `DATABASE_USERNAME` e `DATABASE_PASSWORD`; ambos os serviços aceitam também `DATABASE_URL`.
+
+Depois, suba primeiro o mock do parceiro (porta `8081`), seguido pelo `transaction-service` (porta `8080`) — ambos usam o mesmo `SECURITY_JWT_SECRET` por padrão:
 
 ```bash
 cd external-partner-mock
@@ -74,6 +84,8 @@ curl -X POST http://localhost:8080/transactions \
 ```
 
 A resposta é **sempre 200 OK** com o status de negócio no corpo: `PROCESSED` (sucesso), `FAILED` (falha de negócio — saldo, limite, conta) ou `ERROR` (falha técnica de comunicação após retries). Os códigos HTTP 400 (validação) e 401 (autenticação) são os únicos códigos de erro.
+
+Transações processadas, reservas de limite diário e saldos do mock sobrevivem a reinícios enquanto o volume `postgres-data` for mantido. Para apagar o banco local, remova explicitamente esse volume pelo Docker Compose.
 
 ### Rodando os testes
 

@@ -22,6 +22,11 @@ O sistema simula um serviço transacional Pix operando em ambiente regulamentado
                          │  latência/erros configuráveis│
                          └─────────────────────────┘
 
+             ┌────────────────────────────────────────┐
+             │ PostgreSQL (banco pix_observability)   │
+             │ transações, limites diários e contas   │
+             └────────────────────────────────────────┘
+
      Ambos os serviços emitem logs (JSON) e métricas (Prometheus)
                                       │
                                       ▼
@@ -39,8 +44,9 @@ O sistema simula um serviço transacional Pix operando em ambiente regulamentado
 Microsserviço principal (Spring Boot 4 / Java 25). Recebe requisições de transação Pix, valida regras de negócio, orquestra a chamada ao parceiro externo e retorna o resultado. Responsável por:
 
 - Validação de payload (`jakarta.validation`), incluindo o enum `TransactionType` (`CASH_IN`/`CASH_OUT`)
-- Lógica de cash-in / cash-out, com idempotência por `transactionId` (`TransactionRepository`, em memória)
-- Limite diário de cash-out por conta (`DailyLimitTracker`, em memória, configurável via `transaction.cash-out.daily-limit`)
+- Lógica de cash-in / cash-out, com idempotência por `transactionId` (`TransactionRepository`, JPA/PostgreSQL)
+- Limite diário de cash-out por conta (`DailyLimitTracker`, persistido e concorrente entre instâncias; configurável via `transaction.cash-out.daily-limit`)
+- Migrations versionadas com Flyway; o esquema é validado no startup (`spring.jpa.hibernate.ddl-auto=validate`)
 - Chamada ao parceiro externo via `ExternalPartnerClient`/`HttpExternalPartnerClient` (RestClient), com retry e timeout configuráveis (`partner.retry.*`, `partner.connect-timeout-ms`, `partner.read-timeout-ms`)
 - Autenticação via JWT (Spring Security) — endpoint `POST /auth/token` emite tokens de teste (ver [`API.md`](./API.md))
 - Logs estruturados via SLF4J em cada etapa crítica
@@ -49,10 +55,14 @@ Microsserviço principal (Spring Boot 4 / Java 25). Recebe requisições de tran
 
 Serviço separado (Spring Boot 4 / Java 25, porta 8081) que simula o comportamento de um parceiro externo (PSP ou Banco Central). Responsável por:
 
-- Contas em memória pré-carregadas (`acc-123`, `acc-789`) com saldo — fonte de verdade do saldo "bancário", já que o `transaction-service` não persiste saldos
+- Contas demo (`acc-123`, `acc-789`) semeadas por Flyway e saldos persistidos no PostgreSQL — fonte de verdade do saldo "bancário", já que o `transaction-service` não persiste saldos
 - `POST /partner/verify-balance` e `POST /partner/transfer` (ver [`API.md`](./API.md))
 - Latência artificial (`partner.mock.latency.min-ms`/`max-ms`) e taxa de falha simulada (`partner.mock.failure-rate`) configuráveis, para exercitar o retry do `transaction-service`
 - Mesma autenticação JWT do `transaction-service`, validando tokens assinados com o segredo compartilhado (`security.jwt.secret`)
+
+### Persistência
+
+Os dois serviços usam o banco PostgreSQL `pix_observability` localmente, cada um no seu schema (`transaction_service` e `partner_mock`) com migrations Flyway independentes. `transactions` preserva o resultado de idempotência; `daily_limits` preserva a reserva diária por conta/data; `partner_accounts` preserva os saldos do mock. A reserva de limite usa bloqueio de linha no banco para coordenar chamadas concorrentes entre instâncias.
 
 ### observability
 
