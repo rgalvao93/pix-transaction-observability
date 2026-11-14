@@ -35,7 +35,7 @@ Content-Type: application/json
 { "token": "eyJhbGciOiJIUzI1NiJ9..." }
 ```
 
-O segredo usado para assinar o token é configurado via `security.jwt.secret` (env var `SECURITY_JWT_SECRET`); o valor padrão em `application.properties` é apenas para demonstração.
+O segredo usado para assinar o token é configurado via `security.jwt.secret` (env var `SECURITY_JWT_SECRET`, **obrigatória e sem default** — ver issue #11).
 
 ## POST /transactions
 

@@ -23,3 +23,4 @@ A partir do ADR-008, novos registros são arquivados aqui como arquivos individu
 
 - [**ADR-008 — Contrato OpenAPI 3.1 + spec-driven**](0008-openapi-contract.md)
 - [**ADR-009 — Persistência PostgreSQL nos dois serviços**](0009-postgres-persistence.md)
+- [**ADR-010 — Endpoint de token de dev (`/auth/token`) mantido, comutável via config**](0010-dev-token-endpoint.md)

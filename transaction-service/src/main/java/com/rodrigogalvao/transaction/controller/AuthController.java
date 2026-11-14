@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,10 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Dev-only convenience endpoint: issues a JWT for the given clientId without any
  * credential check. Not real authentication — for local testing only, until a
- * proper identity provider is integrated.
+ * proper identity provider is integrated (GAP-4). Can be turned off with
+ * {@code security.dev-token-enabled=false} (env {@code SECURITY_DEV_TOKEN_ENABLED});
+ * see ADR-010 for the decision to keep it until a real IdP lands.
  */
 @RestController
 @RequestMapping("/auth")
+@ConditionalOnProperty(name = "security.dev-token-enabled", havingValue = "true", matchIfMissing = true)
 public class AuthController {
 
     private final JwtTokenProvider tokenProvider;

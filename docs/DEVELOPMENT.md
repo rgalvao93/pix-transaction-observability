@@ -67,17 +67,17 @@ docker compose up -d postgres
 
 O banco `pix_observability` e o usuário `pix`/`pix_local_dev` são valores locais de desenvolvimento. Use `DATABASE_URL`, `DATABASE_USERNAME` e `DATABASE_PASSWORD` para apontar para outra instância. Os testes usam H2 isolado e não precisam do PostgreSQL.
 
-Em seguida, suba o `external-partner-mock` (porta 8081), depois o `transaction-service` (porta 8080) — ambos precisam do **mesmo** `SECURITY_JWT_SECRET` para que os tokens emitidos por um sejam aceitos pelo outro (por padrão os dois usam o mesmo valor de demonstração em `application.properties`, então basta rodar sem sobrescrever nada):
+Em seguida, suba o `external-partner-mock` (porta 8081), depois o `transaction-service` (porta 8080) — ambos precisam do **mesmo** `SECURITY_JWT_SECRET` para que os tokens emitidos por um sejam aceitos pelo outro. A env é **obrigatória** (issue #11): sem ela o boot falha, pois não há mais valor default em `application.properties`:
 
 ```bash
 cd external-partner-mock
-./mvnw spring-boot:run
+SECURITY_JWT_SECRET=local-dev-secret-change-me ./mvnw spring-boot:run
 ```
 
 ```bash
-# em outro terminal
+# em outro terminal (mesmo valor da variável)
 cd transaction-service
-./mvnw spring-boot:run
+SECURITY_JWT_SECRET=local-dev-secret-change-me ./mvnw spring-boot:run
 ```
 
 ### Testando manualmente

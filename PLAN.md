@@ -60,7 +60,8 @@ Cadência de itens de baixo acoplamento que fecham pontas soltas do MVP antes de
 ## Riscos e Observações
 
 - **Spring Boot 4 / Jackson 3**: dependências modulares (ex: `spring-boot-starter-jackson`, `spring-boot-webmvc-test`, `@MockitoBean`). Mudanças de API podem surpreender durante upgrades — ver [docs/architecture.md](docs/architecture.md).
-- **Segredos**: `security.jwt.secret` tem valor padrão de demonstração. Em qualquer ambiente compartilhado, definir via `SECURITY_JWT_SECRET` (mesmo valor nos dois serviços).
+- **Segredos**: `security.jwt.secret` é **obrigatória e sem default** desde a issue #11 — o boot falha sem `SECURITY_JWT_SECRET` (mesmo valor nos dois serviços; gerar com `openssl rand -base64 64`).
+- **Endpoint de token de dev**: `POST /auth/token` continua para desenvolvimento, desabilitável via `SECURITY_DEV_TOKEN_ENABLED=false` — decisão registrada no [ADR-010](docs/adr/0010-dev-token-endpoint.md); a remoção definitiva vem com o IdP real (GAP-4).
 - **Escopo MVP**: saldos e contas persistem no banco do mock — o `transaction-service` não é fonte de verdade de saldo.
 
 ## Convenções

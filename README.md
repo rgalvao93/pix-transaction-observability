@@ -50,17 +50,17 @@ docker compose up -d postgres
 
 As credenciais padrão (`pix`/`pix_local_dev`) são apenas para desenvolvimento local. Podem ser substituídas por `DATABASE_USERNAME` e `DATABASE_PASSWORD`; ambos os serviços aceitam também `DATABASE_URL`.
 
-Depois, suba primeiro o mock do parceiro (porta `8081`), seguido pelo `transaction-service` (porta `8080`) — ambos usam o mesmo `SECURITY_JWT_SECRET` por padrão:
+Depois, suba primeiro o mock do parceiro (porta `8081`), seguido pelo `transaction-service` (porta `8080`) — ambos exigem a **mesma** `SECURITY_JWT_SECRET` (obrigatória desde a issue #11: sem ela o boot falha; use um valor local qualquer):
 
 ```bash
 cd external-partner-mock
-./mvnw spring-boot:run
+SECURITY_JWT_SECRET=local-dev-secret-change-me ./mvnw spring-boot:run
 ```
 
 ```bash
-# em outro terminal
+# em outro terminal (mesmo valor da variável)
 cd transaction-service
-./mvnw spring-boot:run
+SECURITY_JWT_SECRET=local-dev-secret-change-me ./mvnw spring-boot:run
 ```
 
 ### Testando manualmente

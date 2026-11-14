@@ -12,7 +12,8 @@ variáveis de ambiente:
 | Variável | Descrição | Padrão |
 |---|---|---|
 | `PORT` | Porta injetada pelo Cloud Run (geralmente 8080). O Dockerfile a respeita automaticamente. | 8080 (injetado) |
-| `SECURITY_JWT_SECRET` | Segredo JWT compartilhado entre os dois serviços. **Igual em ambos.** | `demo-only-jwt-secret-change-me-in-production-1234567890` |
+| `SECURITY_JWT_SECRET` | Segredo JWT compartilhado entre os dois serviços. **Igual em ambos.** Obrigatória — **sem default**: o boot falha sem ela (issue #11). Gere um valor forte, ex.: `openssl rand -base64 64`; em produção, forneça por Secret Manager. | *sem default* |
+| `SECURITY_DEV_TOKEN_ENABLED` | `false` desabilita o endpoint demo `POST /auth/token` (emite JWT sem credenciais). **Obrigatória = `false` em produção** — ver [ADR-010](./adr/0010-dev-token-endpoint.md). | `true` (apenas dev) |
 | `PARTNER_BASE_URL` | URL do `external-partner-mock` apontada pelo `transaction-service`. Ex: `https://mock-xxx-uc.a.run.app` | `http://localhost:8081` |
 | `DATABASE_URL` | JDBC URL de uma instância PostgreSQL acessível pelos dois serviços, por exemplo `jdbc:postgresql://HOST:5432/pix_observability` | `jdbc:postgresql://localhost:5432/pix_observability` |
 | `DATABASE_USERNAME` | Usuário do banco PostgreSQL | `pix` (desenvolvimento local) |
@@ -77,5 +78,5 @@ Ambos devem retornar `200 OK` com `{"status":"UP",...}`.
 ## Observação sobre o JWT
 
 O segredo está hardcoded em `application.properties` como valor de demonstração.
-Em produção, **sempre** override via `SECURITY_JWT_SECRET` env var em ambos os serviços.
+`SECURITY_JWT_SECRET` é obrigatória (sem default — o serviço não sobe sem ela) e `SECURITY_DEV_TOKEN_ENABLED=false` deve ser definida em ambos os serviços para desativar o endpoint demo de emissão de token ([ADR-010](./adr/0010-dev-token-endpoint.md)).
 O mesmo valor deve ser usado nos dois.

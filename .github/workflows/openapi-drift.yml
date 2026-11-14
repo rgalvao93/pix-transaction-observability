@@ -12,6 +12,10 @@ jobs:
   drift:
     name: Check api-spec vs /v3/api-docs
     runs-on: ubuntu-latest
+    env:
+      # CI-only throwaway value: SECURITY_JWT_SECRET has no default (issue #11),
+      # so the services refuse to boot without it.
+      SECURITY_JWT_SECRET: ci-only-openapi-drift-not-a-real-secret
     services:
       postgres:
         image: postgres:17-alpine

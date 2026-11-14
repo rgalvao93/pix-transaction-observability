@@ -391,6 +391,7 @@ flowchart LR
 
 ### ADR-003 — Autenticação JWT demo com segredo compartilhado
 
+- **Status:** parcialmente atualizada pelo [ADR-010](./adr/0010-dev-token-endpoint.md) — o segredo não tem mais default (issue #11) e `/auth/token` pode ser desabilitado via `SECURITY_DEV_TOKEN_ENABLED`.
 - **Contexto:** dois serviços precisam se autenticar; não há provedor de identidade disponível no MVP.
 - **Decisão:** JWT HMAC assinado com segredo compartilhado (`security.jwt.secret`, sobrescrevível por env); `POST /auth/token` emite tokens de teste sem validar credenciais.
 - **Consequências:** simula o fluxo real de `Bearer` entre serviços, mas **não é produção-ready**; segredo único compartilhado é uma restrição de segurança (ver [GAP-4](#gaps-e-roadmap)).

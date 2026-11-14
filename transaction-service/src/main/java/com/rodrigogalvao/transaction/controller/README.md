@@ -7,7 +7,7 @@ Camada de apresentação da API REST. Recebe requisições HTTP, delega o proces
 | Classe | Responsabilidade |
 |--------|------------------|
 | `TransactionController` | Exponha o endpoint `POST /transactions` para criação/processamento de transações Pix. |
-| `AuthController` | Endpoint de conveniência `POST /auth/token` que emite um JWT para testes locais. **Apenas para desenvolvimento** — não valida credenciais nem substitui um provedor de identidade real. |
+| `AuthController` | Endpoint de conveniência `POST /auth/token` que emite um JWT para testes locais. **Apenas para desenvolvimento** — não valida credenciais nem substitui um provedor de identidade real. Pode ser desligado com `security.dev-token-enabled=false` (404) — ADR-010. |
 
 ## Endpoints
 
