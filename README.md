@@ -98,14 +98,14 @@ cd external-partner-mock && ./mvnw test
 - **Logs Estruturados**: Logs em JSON prontos para ingestão (via `logstash-logback-encoder`).
 - **Métricas**: Expostas via Spring Boot Actuator + Micrometer (`/actuator/prometheus`).
 - **Verificações de Saúde**: Probes de Readiness e Liveness configurados (`/actuator/health`).
-- **Stack completo**: Prometheus + Grafana + AlertManager via `observability/docker-compose.yml` — dashboard provisionado com taxa de erro, latência p95 e falhas de comunicação.
+- **Stack completo**: Prometheus + Grafana + AlertManager + Mailpit (canal de e-mail demo) via `observability/docker-compose.yml` — dashboard provisionado com taxa de erro, latência p95 e falhas de comunicação.
 
 ```bash
 cd observability
 docker compose up -d
 ```
 
-Prometheus: `http://localhost:9090` · Grafana: `http://localhost:3000` (admin/admin) · AlertManager: `http://localhost:9093`
+Prometheus: `http://localhost:9090` · Grafana: `http://localhost:3000` (admin/admin) · AlertManager: `http://localhost:9093` · Mailpit (e-mails de alerta): `http://localhost:8025`
 
 ## 🐳 Docker e Deploy
 

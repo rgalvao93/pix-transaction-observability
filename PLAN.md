@@ -26,7 +26,7 @@ Plano geral do projeto, organizado em fases. Cada fase tem objetivo, entregávei
 Cadência de itens de baixo acoplamento que fecham pontas soltas do MVP antes de acrescentar features novas.
 
 - [x] **Verificação real da stack de observabilidade** — `docker compose up` completo executado e validado (2026-11-14): Prometheus/Grafana/AlertManager sobem limpos, `promtool`/`amtool` aprovam config e as 4 regras, targets `up`, Grafana provisionado consultando o Prometheus e alerta de teste propagou até o AlertManager.
-- [ ] **Canal de notificação no AlertManager** — hoje o receiver é `default` sem canal real (demo). Configurar webhook ou e-mail (demonstração) e validar alertas de ponta a ponta.
+- [x] **Canal de notificação no AlertManager** — receiver `default` envia e-mail para o Mailpit (SMTP catcher local, UI em `localhost:8025`); notificação validada de ponta a ponta (2026-11-14). Em produção, trocar `smtp_smarthost` por um provedor SMTP real ou usar webhook/Slack.
 - [x] **Persistência real** — PostgreSQL/JPA/Flyway para transações, limite diário e contas do mock; idempotência e reservas diárias persistem entre reinícios.
 - [ ] **Provedor de identidade real** — `/auth/token` emite JWT sem validar credenciais (conveniência de dev). Integrar com IdP/OAuth2 e remover o endpoint de teste.
 - [ ] **Limpeza de código** — subir cobertura de testes (health indicator e casos de borda), adicionar CI (build + testes + verificação de alertas), revisar regras de alerta (`rules.yml`) sob carga.

@@ -121,6 +121,7 @@ docker compose up -d
 - **Prometheus**: `http://localhost:9090` — em Status → Targets, confira que `transaction-service` e `external-partner-mock` aparecem `UP`
 - **Grafana**: `http://localhost:3000` (login `admin`/`admin`) — dashboard "Pix Transaction Observability" já provisionado, com painéis de taxa de erro, latência p95 e falhas de comunicação com o parceiro
 - **AlertManager**: `http://localhost:9093`
+- **Mailpit**: `http://localhost:8025` — caixa de e-mails dos alertas (o AlertManager envia para o SMTP `mailpit:1025`)
 
 Gere tráfego de teste (sucesso, saldo insuficiente, falha simulada) para ver os painéis reagirem — ver exemplos de `curl` em [Testando manualmente](#testando-manualmente) acima. Para forçar falhas simuladas do parceiro, suba o `external-partner-mock` com `partner.mock.failure-rate` mais alto, ex: `PARTNER_MOCK_FAILURE_RATE=0.5 ./mvnw spring-boot:run` (ou ajuste a propriedade diretamente).
 

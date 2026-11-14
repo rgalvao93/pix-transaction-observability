@@ -37,6 +37,13 @@ services:
     ports:
       - "9093:9093"
 
+  mailpit:
+    image: axllent/mailpit:v1.33.1
+    container_name: pix-mailpit
+    ports:
+      - "1025:1025"   # SMTP (AlertManager envia para aqui)
+      - "8025:8025"   # UI/API: http://localhost:8025
+
   grafana:
     image: grafana/grafana:11.4.0
     container_name: pix-grafana

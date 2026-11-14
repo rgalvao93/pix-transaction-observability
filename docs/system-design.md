@@ -345,7 +345,7 @@ flowchart LR
     TS -->|logs JSON stdout| LO[(Coleta de logs — gap)]
     PR -->|regras rules.yml| AM[AlertManager]
     PR --> GR[Grafana dashboard pix-overview]
-    AM -->|sem canal configurado (demo)| CHAN[X]
+    AM -->|e-mail demo (SMTP)| CHAN[Mailpit :8025<br/>SMTP catcher local]
 ```
 
 > As métricas de negócio (`transaction_total`, `transaction_processing_duration_seconds`, `external_partner_call_duration_seconds`, `external_partner_calls_failed_total`) são emitidas **apenas pelo `transaction-service`**. O `external-partner-mock` publica somente métricas HTTP nativas do Actuator e o alvo `up{job="external-partner-mock"}`.

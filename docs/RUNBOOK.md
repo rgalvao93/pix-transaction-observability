@@ -121,4 +121,4 @@ sum by (operation) (rate(external_partner_calls_failed_total[5m]))
 - **PostgreSQL**: idempotência, limite diário e saldos sobrevivem a reinícios. Preserve o volume `postgres-data`; apagar esse volume remove permanentemente os dados locais.
 - **Quirk RN-05**: no cash-out, falha na transferência **não reverte** a reserva do limite diário — falhas contam contra o limite (correção planejada em GAP-8).
 - **Falha simulada ≠ retry**: `success: false` do mock não dispara retry; apenas erro de transporte/HTTP. Para exercitar o caminho de retry, pare o mock ou suba a latência acima do timeout de leitura (`partner.read-timeout-ms`=2s).
-- **AlertManager sem canal real**: o receiver `default` é demo e não notifica — configurar webhook/e-mail é item da Fase 5 do [`PLAN.md`](../PLAN.md).
+- **Canal de notificação (demo)**: o receiver `default` envia e-mail para o Mailpit — mensagens em `http://localhost:8025`. Em produção, trocar `smtp_smarthost` no `alertmanager.yml` por um provedor SMTP real (ou webhook/Slack); validar com um alerta de teste.

@@ -62,7 +62,7 @@ observability/
 │   └── dashboards/
 │       └── pix-overview.json            # dashboard com os painéis abaixo
 └── alertmanager/
-    └── alertmanager.yml     # roteamento de alertas (receiver "default", sem canal real configurado)
+    └── alertmanager.yml     # roteamento de alertas (receiver "default" → e-mail demo no Mailpit)
 ```
 
 Serviços:
@@ -71,7 +71,8 @@ Serviços:
 | --- | --- | --- |
 | Prometheus | 9090 | Coleta métricas de `/actuator/prometheus` de `transaction-service` e `external-partner-mock`, que rodam no host (`host.docker.internal:8080`/`:8081`) |
 | Grafana | 3000 | Dashboard "Pix Transaction Observability" provisionado automaticamente (login `admin`/`admin`, ou acesso anônimo como Viewer) |
-| AlertManager | 9093 | Recebe alertas do Prometheus; sem canal de notificação real configurado (demo) |
+| AlertManager | 9093 | Recebe alertas do Prometheus e envia notificações por e-mail via Mailpit (canal demo) |
+| Mailpit | 8025 (UI) · 1025 (SMTP) | SMTP catcher local que recebe os e-mails do AlertManager — ver mensagens em `http://localhost:8025` |
 
 Regras de alerta (`prometheus/rules.yml`): `HighTransactionErrorRate` (taxa de `status=ERROR` > 5% em 5m), `PartnerCallFailuresHigh` (>5 falhas de chamada ao parceiro em 10m), `TransactionServiceDown` e `ExternalPartnerMockDown` (target fora do ar por 1m).
 
@@ -89,7 +90,7 @@ cd transaction-service && ./mvnw spring-boot:run     # terminal 2
 cd observability && docker compose up -d             # terminal 3
 ```
 
-> **Nota**: primeiro boot real validado em 2026-11-14 — `docker compose up` completo, `promtool check config/rules` e `amtool check-config` aprovando, targets `up`, datasource e dashboard do Grafana provisionados e um alerta de teste propagando do Prometheus até o AlertManager (rota `default`, sem canal de notificação real).
+> **Nota**: primeiro boot real validado em 2026-11-14 — `docker compose up` completo, `promtool check config/rules` e `amtool check-config` aprovando, targets `up`, datasource e dashboard do Grafana provisionados e um alerta de teste propagando do Prometheus até o AlertManager. O canal de e-mail demo (receiver `default` → Mailpit) foi validado com notificação recebida na UI do Mailpit.
 
 ## Rastreamento (Traces)
 

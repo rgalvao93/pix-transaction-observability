@@ -66,7 +66,7 @@ Os dois serviços usam o banco PostgreSQL `pix_observability` localmente, cada u
 
 ### observability
 
-Configuração Docker Compose com Prometheus (scrape de `/actuator/prometheus` dos dois serviços + regras de alerta), Grafana (dashboard provisionado automaticamente) e AlertManager (roteamento de alertas, sem canal de notificação real). Ver [`OBSERVABILITY.md`](./OBSERVABILITY.md).
+Configuração Docker Compose com Prometheus (scrape de `/actuator/prometheus` dos dois serviços + regras de alerta), Grafana (dashboard provisionado automaticamente), AlertManager (roteamento de alertas para o canal de e-mail demo via Mailpit) e Mailpit (SMTP catcher local com UI em `localhost:8025`). Ver [`OBSERVABILITY.md`](./OBSERVABILITY.md).
 
 ## Fluxo — Cash-In
 

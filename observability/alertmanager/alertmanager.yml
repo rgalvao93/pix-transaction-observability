@@ -1,3 +1,11 @@
+# DEMO: notifications go to the local Mailpit SMTP catcher (see docker-compose.yml).
+# For a real deployment, replace smtp_smarthost / email_configs with your SMTP
+# provider or swap the receiver for slack_configs / webhook_configs.
+global:
+  smtp_smarthost: "mailpit:1025"
+  smtp_from: "alertmanager@pix-observability.local"
+  smtp_require_tls: false
+
 route:
   receiver: default
   group_by: ["alertname"]
@@ -6,6 +14,6 @@ route:
   repeat_interval: 4h
 
 receivers:
-  # DEMO: no real notification channel configured. To wire up real alerting,
-  # add e.g. slack_configs / email_configs / webhook_configs here.
   - name: default
+    email_configs:
+      - to: "oncall@pix-observability.local"
