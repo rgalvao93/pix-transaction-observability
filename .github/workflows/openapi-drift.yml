@@ -12,6 +12,20 @@ jobs:
   drift:
     name: Check api-spec vs /v3/api-docs
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: pix_observability
+          POSTGRES_USER: pix
+          POSTGRES_PASSWORD: pix_local_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
