@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build & test (${{ matrix.module }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [transaction-service, external-partner-mock]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Run tests
+        working-directory: ${{ matrix.module }}
+        run: ./mvnw -B test
+
+      - name: Upload test reports (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-${{ matrix.module }}
+          path: ${{ matrix.module }}/target/surefire-reports
+          if-no-files-found: ignore
+
+  alert-rules:
+    name: Validate alert rules (promtool / amtool)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: promtool check config and rules
+        run: |
+          docker run --rm -v "$PWD/observability/prometheus:/etc/prometheus:ro" \
+            --entrypoint promtool prom/prometheus:v3.0.1 \
+            check config /etc/prometheus/prometheus.yml
+          docker run --rm -v "$PWD/observability/prometheus:/etc/prometheus:ro" \
+            --entrypoint promtool prom/prometheus:v3.0.1 \
+            check rules /etc/prometheus/rules.yml
+
+      - name: amtool check alertmanager config
+        run: |
+          docker run --rm -v "$PWD/observability/alertmanager:/etc/alertmanager:ro" \
+            --entrypoint amtool prom/alertmanager:v0.27.0 \
+            check-config /etc/alertmanager/alertmanager.yml
