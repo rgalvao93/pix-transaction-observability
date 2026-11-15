@@ -8,7 +8,7 @@ Integração com o parceiro externo que executa as operações reais de verifica
 |--------|------------------|
 | `ExternalPartnerClient` | Interface que define o contrato de integração: `verifyBalance(accountId)` e `transfer(accountId, amount, type)`. |
 | `HttpExternalPartnerClient` | Implementação via `RestClient`. Gera um JWT próprio (`transaction-service`) para autenticar no parceiro, aplica **retry com backoff** linear e mede chamadas com métricas Micrometer. |
-| `PartnerClientConfig` | Configura o `RestClient.Builder` com timeouts de conexão (`partner.connect-timeout-ms`, padrão 1000) e leitura (`partner.read-timeout-ms`, padrão 2000). |
+| `PartnerClientConfig` | Publica um `RestClientCustomizer` que aplica timeouts de conexão (`partner.connect-timeout-ms`, padrão 1000) e leitura (`partner.read-timeout-ms`, padrão 2000) ao `RestClient.Builder` auto-configurado — preservando a instrumentação de observação/tracing. |
 | `ExternalPartnerException` | Exceção lançada quando todas as tentativas de chamada ao parceiro falham. |
 
 ## Operações

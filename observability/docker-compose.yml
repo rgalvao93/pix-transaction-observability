@@ -44,11 +44,24 @@ services:
       - "1025:1025"   # SMTP (AlertManager envia para aqui)
       - "8025:8025"   # UI/API: http://localhost:8025
 
+  tempo:
+    image: grafana/tempo:2.10.10
+    container_name: pix-tempo
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "3200:3200"   # HTTP query API (Grafana datasource)
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP (apps exportam para cá)
+
   grafana:
     image: grafana/grafana:11.4.0
     container_name: pix-grafana
     depends_on:
       - prometheus
+      - tempo
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
@@ -62,3 +75,4 @@ services:
 
 volumes:
   postgres-data:
+  tempo-data:

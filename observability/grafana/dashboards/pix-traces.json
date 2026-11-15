@@ -1,0 +1,104 @@
+{
+  "title": "Pix — Tracing & Latência por operação",
+  "uid": "pix-traces",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Abrindo os traces no Tempo",
+      "type": "text",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Traces distribuídos** (transaction-service → external-partner-mock) — Grafana → *Explore* → datasource **Tempo**.\n\nBuscas úteis (TraceQL):\n\n- Todos os traces: `{}`\n- Uma transação específica: `{ span.transaction.id = \"<transactionId>\" }`\n- Traces com falha de comunicação com o parceiro: `{ span.transaction.status = \"ERROR\" }`\n\nO trace completo de `POST /transactions` mostra: `http post /transactions` → `transaction-process` (span de negócio, tags `transaction.id` / `transaction.type` / `transaction.status`) → `http post` (verify-balance e transfer, cliente) → spans server no `external-partner-mock`.\n\n> Nota: a listagem de traces em painel de dashboard nesta versão (Grafana 11.4 + Tempo 2.10) só funciona via Explore/streaming; o painel aponta para o fluxo suportado."
+      }
+    },
+    {
+      "id": 2,
+      "title": "Latência do parceiro por operação (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum(rate(external_partner_call_duration_seconds_bucket[5m])) by (le, operation))",
+          "legendFormat": "{{operation}} p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(external_partner_call_duration_seconds_bucket[5m])) by (le, operation))",
+          "legendFormat": "{{operation}} p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(external_partner_call_duration_seconds_bucket[5m])) by (le, operation))",
+          "legendFormat": "{{operation}} p99"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Latência de transação por tipo (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum(rate(transaction_processing_duration_seconds_bucket[5m])) by (le, type))",
+          "legendFormat": "{{type}} p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(transaction_processing_duration_seconds_bucket[5m])) by (le, type))",
+          "legendFormat": "{{type}} p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(transaction_processing_duration_seconds_bucket[5m])) by (le, type))",
+          "legendFormat": "{{type}} p99"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Como correlacionar trace → log → métrica",
+      "type": "text",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Fluxo de correlação (Fase 6)**\n\n1. **Trace**: Grafana → *Explore* → datasource **Tempo** → busque por `{ span.transaction.id = \"<transactionId>\" }`. O trace cobre `transaction-service` → `external-partner-mock` (spans HTTP client/server anotados com o span de negócio `transaction-process`, tags `transaction.id`, `transaction.type`, `transaction.status`).\n2. **Log**: o mesmo `traceId`/`spanId` aparece nos logs JSON (MDC) dos dois serviços — copie o `traceId` do trace e filtre os logs por ele (ex.: `grep '<traceId>'`).\n3. **Métrica**: os percentis p50/p95/p99 por operação (`verify-balance` × `transfer`, `CASH_IN` × `CASH_OUT`) estão nos painéis acima, calculados dos histogramas `external_partner_call_duration_seconds_bucket` e `transaction_processing_duration_seconds_bucket` (Prometheus).\n\nSampling atual: **100%** (`management.tracing.sampling.probability=1.0`) — todos os requests geram trace. Endpoint OTLP: `http://localhost:4318/v1/traces` (configurável via `OTLP_TRACES_ENDPOINT`)."
+      }
+    }
+  ]
+}

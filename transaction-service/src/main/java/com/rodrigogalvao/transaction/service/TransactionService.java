@@ -10,6 +10,8 @@ import com.rodrigogalvao.transaction.repository.DailyLimitTracker;
 import com.rodrigogalvao.transaction.repository.TransactionRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,15 +28,18 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final DailyLimitTracker dailyLimitTracker;
     private final MeterRegistry meterRegistry;
+    private final Tracer tracer;
 
     public TransactionService(ExternalPartnerClient partnerClient,
                                TransactionRepository transactionRepository,
                                DailyLimitTracker dailyLimitTracker,
-                               MeterRegistry meterRegistry) {
+                               MeterRegistry meterRegistry,
+                               Tracer tracer) {
         this.partnerClient = partnerClient;
         this.transactionRepository = transactionRepository;
         this.dailyLimitTracker = dailyLimitTracker;
         this.meterRegistry = meterRegistry;
+        this.tracer = tracer;
     }
 
     public TransactionResponse process(TransactionRequest request) {
@@ -45,19 +50,31 @@ public class TransactionService {
             return existing.get();
         }
 
+        Span span = tracer.nextSpan().name("transaction-process")
+                .tag("transaction.id", request.getTransactionId())
+                .tag("transaction.type", request.getType().name())
+                .start();
         Timer.Sample sample = Timer.start(meterRegistry);
         long startedAt = System.currentTimeMillis();
         TransactionResponse response;
-        try {
+        try (Tracer.SpanInScope ignored = tracer.withSpan(span)) {
             response = request.getType() == TransactionType.CASH_IN
                     ? processCashIn(request)
                     : processCashOut(request);
         } catch (ExternalPartnerException ex) {
+            span.error(ex);
             log.error("Transaction {} failed due to partner communication error: {}",
                     request.getTransactionId(), ex.getMessage());
             response = new TransactionResponse(request.getTransactionId(), TransactionStatus.ERROR.name(),
                     "falha de comunicação com o parceiro externo");
+        } catch (RuntimeException ex) {
+            span.error(ex);
+            span.tag("transaction.status", TransactionStatus.ERROR.name());
+            span.end();
+            throw ex;
         }
+        span.tag("transaction.status", response.getStatus());
+        span.end();
 
         transactionRepository.save(request.getTransactionId(), request.getType(), request.getAccountId(),
                 request.getAmount(), response);
