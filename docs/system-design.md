@@ -41,7 +41,7 @@ A proposta do projeto é construir o serviço com **observabilidade desde o Dia 
 
 **Fora do escopo (MVP):**
 
-- Tracing distribuído (OpenTelemetry) — gap em aberto (Fase 6);
+- Tracing distribuído (OpenTelemetry → Tempo) — implementado na Fase 6 (ver [ADR-011](adr/0011-opentelemetry-tempo-tracing.md));
 - Autenticação real com provedor de identidade (OAuth2/OIDC);
 - Fila/mensageria e consistência eventual entre serviços;
 - CI/CD, containerização dos serviços Java e infraestrutura de produção;
@@ -462,7 +462,7 @@ ADR-008 em diante são arquivos individuais em [`docs/adr/`](./adr/README.md) (e
 | RNF-06 | Manutenibilidade | ✅ camadas + convenções |
 | RNF-07 | Testabilidade | ✅ unit + integração nos dois serviços |
 | RNF-08 | Portabilidade | ✅ Maven Wrapper + Docker Compose + env vars |
-| RNF-09 | Rastreabilidade | 🟡 IDs nos logs; sem tracing distribuído |
+| RNF-09 | Rastreabilidade | ✅ Implementado — tracing distribuído OTel → Tempo (Fase 6); `traceId`/`spanId` nos logs JSON |
 | RNF-10 | Escalabilidade | 🟡 Estado compartilhado no PostgreSQL; idempotência concorrente ainda requer coordenação antes da chamada ao parceiro |
 
 ---
@@ -473,7 +473,7 @@ ADR-008 em diante são arquivos individuais em [`docs/adr/`](./adr/README.md) (e
 
 | Gap | ID | Prioridade | Esforço | Descrição |
 | --- | --- | --- | --- | --- |
-| **GAP-1** | Tracing distribuído | Alta | M | OpenTelemetry + propagate `traceId` entre `transaction-service` e o parceiro; coleta em Tempo ou Jaeger para correlação automática fim-a-fim (supre RNF-09 por completo). |
+| **GAP-1** | Tracing distribuído | Alta | M | ✅ Resolvido na Fase 6 (ADR-011): OpenTelemetry + propagação de `traceId` entre `transaction-service` e o parceiro; coleta no Tempo. |
 | **GAP-2** | Idempotência concorrente | Alta | M | Persistência em PostgreSQL foi implementada pelo ADR-009; falta reservar atomicamente `transactionId` antes da chamada ao parceiro para impedir efeitos duplicados em requisições simultâneas ou após crash intermediário. |
 | **GAP-3** | Auditoria completa | Alta | M | Há histórico básico persistido de pedido e status; falta trilha imutável de eventos e persistência da referência do parceiro para suportar auditoria completa em ambiente regulamentado. |
 | **GAP-4** | IdP real (OAuth2/OIDC) | Média | M | Substituir `POST /auth/token` demo por fluxo de autorização real; JWT emitido/validado pelo IdP. |
@@ -489,7 +489,7 @@ O roadmap operacional em fases vive em [`PLAN.md`](../PLAN.md) — fonte de verd
 
 ```mermaid
 flowchart LR
-    A[Fase 5<br/>backlog / endurecimento<br/>GAP-8, GAP-9, limpeza e CI] --> B[Fase 6<br/>OpenTelemetry (GAP-1)<br/>tracing + coleta de logs] --> C[Fase 7<br/>resiliência avançada<br/>circuit breaker + carga]
+    A[Fase 5<br/>backlog / endurecimento<br/>GAP-8, GAP-9, limpeza e CI] --> B[Fase 6 ✅<br/>OpenTelemetry (GAP-1)<br/>tracing entregue — ADR-011] --> C[Fase 7<br/>resiliência avançada<br/>circuit breaker + carga]
 ```
 
 GAPs ainda sem fase dedicada (GAP-2 persistência, GAP-3 auditoria, GAP-4 IdP, GAP-5 segredos, GAP-6 eventos, GAP-7 SLOs) permanecem como backlog priorizável.

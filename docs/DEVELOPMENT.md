@@ -119,7 +119,8 @@ docker compose up -d
 ```
 
 - **Prometheus**: `http://localhost:9090` — em Status → Targets, confira que `transaction-service` e `external-partner-mock` aparecem `UP`
-- **Grafana**: `http://localhost:3000` (login `admin`/`admin`) — dashboard "Pix Transaction Observability" já provisionado, com painéis de taxa de erro, latência p95 e falhas de comunicação com o parceiro
+- **Grafana**: `http://localhost:3000` (login `admin`/`admin`) — dashboards "Pix Transaction Observability" (taxa de erro, latência p95, falhas de comunicação com o parceiro) e "Pix — Tracing & Latência por operação" (p50/p95/p99 por operação, mais guia para abrir os traces no Explore → Tempo) já provisionados
+- **Tempo**: `http://localhost:3200` — HTTP query API (sem UI). Veja os traces em Grafana → Explore → Tempo (TraceQL `{}` ou `{ span.transaction.id = "<transactionId>" }`)
 - **AlertManager**: `http://localhost:9093`
 - **Mailpit**: `http://localhost:8025` — caixa de e-mails dos alertas (o AlertManager envia para o SMTP `mailpit:1025`)
 

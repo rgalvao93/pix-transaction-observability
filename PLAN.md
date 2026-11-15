@@ -16,6 +16,7 @@ Plano geral do projeto, organizado em fases. Cada fase tem objetivo, entregávei
 | 2 | Lógica de negócio (cash-in/cash-out), idempotência, limite diário, segurança JWT e testes | ✅ Concluída | `7984f4e` |
 | 3 | `external-partner-mock` — PSP/Banco Central simulado (latência e falha configuráveis) | ✅ Concluída | `0416368` |
 | 4 | Observabilidade completa — logs estruturados, métricas Prometheus, health checks, stack Docker (Prometheus/Grafana/AlertManager) | ✅ Concluída | `363e44a` |
+| 6 | OpenTelemetry (tracing distribuído) — OTel nos dois serviços, Tempo na stack, correlação trace → log → métrica, dashboard de latência por operação | ✅ Concluída | ADR-011 |
 
 > Design e arquitetura detalhados em [docs/architecture.md](docs/architecture.md). Documentação de API, observabilidade e desenvolvimento em [docs/](docs/).
 
@@ -33,14 +34,7 @@ Cadência de itens de baixo acoplamento que fecham pontas soltas do MVP antes de
 
 **Critérios de aceite da Fase 5**: stack de observabilidade sobe com `docker compose up` sem ajustes manuais; alertas chegam ao canal configurado; transações sobrevivem a restart (persistência); endpoints protegidos não dependem mais do token de teste; CI verde no repositório.
 
-### Fase 6 — OpenTelemetry (Tracing Distribuído)
-
-- [ ] Adicionar tracing distribuído com OpenTelemetry (SDK + `otlp`) nos dois serviços.
-- [ ] Conectar a um collector/backend de traces (ex: Jaeger ou Tempo do Grafana).
-- [ ] Correlacionar trace → log → métrica (ex: incluir `traceId`/`spanId` nos logs estruturados).
-- [ ] Dashboard no Grafana com análise de latência por operação (verify-balance × transfer, cash-in × cash-out).
-
-**Critérios de aceite da Fase 6**: uma transação cash-in/cash-out gera um trace distribuído completo (transaction-service → external-partner-mock) com spans anotados, visível no backend de traces; logs carregam `traceId` para correlação.
+> **Fase 6 — OpenTelemetry (Tracing Distribuído) — ✅ Concluída (2026-11-15)**: OTel nos dois serviços (`spring-boot-starter-opentelemetry`), exportação direta OTLP → Tempo na stack, correlação trace → log → métrica (`traceId`/`spanId` no MDC; span de negócio `transaction-process`) e dashboard `pix-traces.json`. Validado em 2026-11-15: `POST /transactions` (cash-in) gerou trace distribuído completo `transaction-service` → `external-partner-mock` visível no Tempo (traceID `58812d276c15f5d0ad97db1b5dfe1f2a`). Decisões em [ADR-011](docs/adr/0011-opentelemetry-tempo-tracing.md); operacional em [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md).
 
 ### Fase 7 — Resiliência Avançada (opcional)
 
@@ -55,6 +49,7 @@ Cadência de itens de baixo acoplamento que fecham pontas soltas do MVP antes de
 - Branch `main` sincronizada com `origin/main`.
 - `transaction-service` (8080) e `external-partner-mock` (8081) implementados e testados — ver [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) para executar localmente.
 - Stack de observabilidade validada com `docker compose up` completo (boot real + propagação de alerta até o AlertManager).
+- Fase 6 (OpenTelemetry → Tempo) implementada; traces distribuídos validados de ponta a ponta e dashboard `Pix — Tracing & Latência por operação` provisionado — ver [ADR-011](docs/adr/0011-opentelemetry-tempo-tracing.md).
 - Documentação completa em [docs/](docs/): `architecture.md`, `API.md`, `OBSERVABILITY.md`, `DEVELOPMENT.md`.
 
 ## Riscos e Observações
