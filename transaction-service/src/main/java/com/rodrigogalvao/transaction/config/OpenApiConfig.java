@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
                 version = "1.0.0",
                 description = "Serviço transacional Pix (cash-in/cash-out) com observabilidade." +
                         "Autenticação: JWT Bearer emitido por POST /auth/token (demo, sem validação de credenciais)."),
-        servers = @Server(url = "http://localhost:8080", description = "local dev"))
+        servers = @Server(url = "/", description = "current origin (resolves against the host serving this page)"))
 @SecurityScheme(
         name = "bearerAuth",
         type = SecuritySchemeType.HTTP,

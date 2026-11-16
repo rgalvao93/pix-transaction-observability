@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
                 description = "Simula o parceiro externo (PSP / Banco Central), fonte de verdade do saldo, " +
                         "com latência artificial e taxa de falha configuráveis. " +
                         "Autenticação: JWT Bearer assinado com o mesmo segredo do transaction-service."),
-        servers = @Server(url = "http://localhost:8081", description = "local dev"))
+        servers = @Server(url = "/", description = "current origin (resolves against the host serving this page)"))
 @SecurityScheme(
         name = "bearerAuth",
         type = SecuritySchemeType.HTTP,

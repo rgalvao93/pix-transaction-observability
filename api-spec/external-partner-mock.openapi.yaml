@@ -4,8 +4,8 @@ info:
   description: 'Simula o parceiro externo (PSP / Banco Central), fonte de verdade do saldo, com latência artificial e taxa de falha configuráveis. Autenticação: JWT Bearer assinado com o mesmo segredo do transaction-service.'
   version: 1.0.0
 servers:
-- url: http://localhost:8081
-  description: local dev
+- url: /
+  description: current origin (resolves against the host serving this page)
 paths:
   /partner/verify-balance:
     post:
