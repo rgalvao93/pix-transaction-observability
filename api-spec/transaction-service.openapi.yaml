@@ -4,8 +4,8 @@ info:
   description: 'Serviço transacional Pix (cash-in/cash-out) com observabilidade.Autenticação: JWT Bearer emitido por POST /auth/token (demo, sem validação de credenciais).'
   version: 1.0.0
 servers:
-- url: http://localhost:8080
-  description: local dev
+- url: /
+  description: current origin (resolves against the host serving this page)
 paths:
   /transactions:
     post:
